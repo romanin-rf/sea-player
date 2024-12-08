@@ -2,11 +2,11 @@ import os
 import glob
 import properties
 from typing import Dict, List, Tuple, Optional
-# * Local Imports
+# > Local Imports
 from .functions import formater
 from .exceptions import LanguageNotExistError, LanguageNotLoadedError
 
-# ! Language Class
+# ! Child Class
 class Language:
     """The class reflects the file with the translation."""
     @staticmethod
@@ -45,13 +45,8 @@ class Language:
     
     # ? Magic Methods
     def __str__(self) -> str:
-        attrs = formater(
-            name=self.__name,
-            title=self.__title,
-            mark=self.__mark,
-            loaded=self.__loaded
-        )
-        return f"{self.__class__.__name__}({attrs})"
+        form = formater(name=self.__name, title=self.__title, mark=self.__mark, loaded=self.__loaded)
+        return f"{self.__class__.__name__}({form})"
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -146,7 +141,7 @@ class Language:
             return self.__data.get(key, default)
         raise LanguageNotLoadedError()
 
-# ! Languages Class
+# ! Main Class
 class LanguageLoader:
     """The loader of files with translation."""
     # ? Main Methods
@@ -287,7 +282,7 @@ class LanguageLoader:
             for alang in self.__alangs:
                 if (data:=alang.get(key)) is not None:
                     break
-        return data if data is not None else f"<LTNF:{key}>"
+        return data if data is not None else "<LTNF>"
     
     def merge(self, ll) -> None:
         """Adding additional languages (`self.alangs`).

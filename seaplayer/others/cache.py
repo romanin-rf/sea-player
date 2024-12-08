@@ -3,7 +3,7 @@ import pickle
 # > Typing
 from typing import TypeVar, Any
 
-# ! T
+# ! Type Vars
 D = TypeVar("D")
 
 # ! Main Class
@@ -32,7 +32,7 @@ class Cacher:
     def read(self, filepath: str, default: D) -> D:
         try:
             with open(filepath, "rb") as file:
-                return pickle.load(file)
+                return pickle.load(file, encoding='utf-8')
         except:
             self.write(default, filepath)
             return default
