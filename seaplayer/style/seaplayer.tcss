@@ -10,6 +10,7 @@
     border: solid cornflowerblue;
     width: 1fr;
     height: 100%;
+    box-sizing: border-box;
 }
 
 .player-selected-label {
@@ -44,6 +45,12 @@
     height: 100%;
 }
 
-.playlist-add-sound-input {
+.playlist-sound-input {
     width: 1fr;
+    height: 3;
+}
+
+.fuller-box {
+    width: 1fr;
+    height: 1fr;
 }

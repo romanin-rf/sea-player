@@ -1,5 +1,6 @@
 import os
-from textual.app import App, ComposeResult, on
+from textual import on, work
+from textual.app import App, ComposeResult
 from textual.widgets import Label, Input, Button, Header, Footer, LoadingIndicator
 from textual.containers import Container, Vertical, Horizontal
 # > Pillow
@@ -23,7 +24,13 @@ from ._types import PlaybackMode
 
 # ! Template Variables
 
-NULL_WIDGET = LoadingIndicator
+class NullWidget(LoadingIndicator):
+    DEFAULT_CSS = """
+    NullWidget {
+        height: 1fr;
+        width: 1fr;
+    }
+    """
 
 # ! SeaPlayer Main Application
 class SeaPlayer(App[None]):
@@ -56,10 +63,22 @@ class SeaPlayer(App[None]):
         # TODO: Написать получение данных о текущем статусе воспроизведения
         return "0:00 |   0%", None, None
     
+    # ^ Workers
+    
+    @work(
+        name="seaplayer-playback-loop",
+        description="SeaPlayer Playback Loop",
+        group="seaplayer-owner",
+        exit_on_error=True,
+        thread=True
+    )
+    async def __playback_loop__(self):
+        return None
+    
     # ^ On Methods
     
     @on(Button.Pressed, "#switch-playback-mode")
-    async def switch_playback_mode(self, *args, **kwargs) -> None:
+    async def switch_playback_mode(self, event: Button.Pressed) -> None:
         if self.playback_mode == PlaybackMode.PLAY:
             self.playback_mode = PlaybackMode.REPLAY_SOUND
         elif self.playback_mode == PlaybackMode.REPLAY_SOUND:
@@ -67,6 +86,21 @@ class SeaPlayer(App[None]):
         else:
             self.playback_mode = PlaybackMode.PLAY
         self.player_playback_switch_button.label = self.get_playback_mode_text()
+    
+    @on(Button.Pressed, "#button-pause")
+    async def pause_playback(self, event: Button.Pressed) -> None:
+        # TODO: Написать метод паузы воспроизведения
+        pass
+    
+    @on(Button.Pressed, "#button-play-stop")
+    async def play_or_stop_playback(self, event: Button.Pressed) -> None:
+        # TODO: Написать метод воспроизведения или остановки воспроизведения
+        pass
+    
+    @on(Input.Submitted, "#soundinput")
+    async def sound_input_submitted(self, event: Input.Submitted) -> None:
+        # TODO: Написать метод отправки на обработку input-а
+        pass
     
     # ^ Compose Method
     
@@ -84,8 +118,8 @@ class SeaPlayer(App[None]):
         self.playlist_box.border_title = self.ll.get("playlist")
         #self.playlist_view = PlayListView(classes="playlist-view")
         
-        self.playlist_add_sound_input = Input(
-            classes="playlist-add-sound-input", id="addsoundinput",
+        self.playlist_sound_input = Input(
+            classes="playlist-sound-input", id="soundinput",
             placeholder=self.ll.get("playlist.input.placeholder")
         )
         self.player_playback_switch_button = Button(
@@ -103,7 +137,7 @@ class SeaPlayer(App[None]):
                     yield self.player_image
                 with Container(classes="player-contol-panel"):
                     yield self.player_selected_label
-                    yield PlaybackProgress()
+                    yield PlaybackProgress(getfunc=self.get_playback_statuses_text)
                     with Horizontal(classes="box-buttons-sound-control"):
                         yield Button(
                             self.ll.get("player.button.pause"),
@@ -119,6 +153,6 @@ class SeaPlayer(App[None]):
                         )
                         yield self.player_playback_switch_button
         with self.playlist_box:
-            yield NULL_WIDGET() #yield self.playlist_view
-            yield self.playlist_add_sound_input
+            yield NullWidget() #yield self.playlist_view
+            yield self.playlist_sound_input
         yield Footer()

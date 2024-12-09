@@ -10,7 +10,7 @@ from typing_extensions import Union, Optional, Tuple
 # ! Main Class
 class ImageWidget(Label):
     DEFAULT_CSS = """
-    StandartImageLabel {
+    ImageWidget {
         height: 1fr;
         width: 1fr;
         align: center middle;
