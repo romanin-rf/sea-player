@@ -1,4 +1,9 @@
-from typing import Generator, Optional, Iterable, Any
+from typing_extensions import (
+    Any,
+    Iterable,
+    Generator,
+    Optional,
+)
 
 # ! Error Base Class
 class Error(Exception):

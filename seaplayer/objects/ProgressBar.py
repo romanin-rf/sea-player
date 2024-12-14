@@ -1,9 +1,10 @@
-from textual.widgets import Static
+from textual.widgets import Static, ProgressBar
 from rich.progress import Progress, BarColumn, TextColumn
 # > Typing
 from typing_extensions import Optional, Callable, Tuple
 
 # ! Main Class
+
 class PlaybackProgress(Static):
     DEFAULT_CSS = """
     IndeterminateProgress {
@@ -14,7 +15,7 @@ class PlaybackProgress(Static):
     def __init__(
         self,
         getfunc: Optional[Callable[[], Tuple[str, Optional[float], Optional[float]]]]=None,
-        fps: int=10
+        fps: int=8
     ) -> None:
         super().__init__()
         self._bar = Progress(BarColumn(), TextColumn("{task.description}"))

@@ -6,7 +6,6 @@ It is a cut-out part of the code from the `rich_pixels` project.
 from __future__ import annotations
 
 
-
 from pathlib import Path, PurePath
 # > Pillow
 from PIL import Image as PILImageModule

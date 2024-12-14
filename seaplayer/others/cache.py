@@ -1,7 +1,10 @@
 import os
 import pickle
 # > Typing
-from typing import TypeVar, Any
+from typing_extensions import (
+    Any,
+    TypeVar
+)
 
 # ! Type Vars
 D = TypeVar("D")

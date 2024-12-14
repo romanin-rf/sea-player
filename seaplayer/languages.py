@@ -1,8 +1,12 @@
 import os
 import glob
 import properties
-from typing import Dict, List, Tuple, Optional
-# * Local Imports
+# > Typing
+from typing_extensions import (
+    Dict, List, Tuple,
+    Optional
+)
+# > Local Imports
 from .functions import formater
 from .exceptions import LanguageNotExistError, LanguageNotLoadedError
 

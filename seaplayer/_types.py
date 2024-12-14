@@ -1,4 +1,5 @@
-from pathlib import Path
+from os import PathLike
+from pathlib import Path, PurePath, PosixPath, PurePosixPath, PureWindowsPath, WindowsPath
 from enum import Enum
 # > Typing
 from typing_extensions import (
@@ -11,7 +12,8 @@ from seaplayer_audio.streamers import AsyncCallbackSoundDeviceStreamer, AsyncThr
 
 # ! Type Aliases
 
-FilePathType: TypeAlias = Union[str, Path]
+PathlibType: TypeAlias = Union[Path, PurePath, PosixPath, PurePosixPath, PureWindowsPath, WindowsPath]
+FilePathType: TypeAlias = Union[str, bytes, PathlibType, PathLike[str], PathLike[bytes]]
 
 SupportAudioSource: TypeAlias = Union[AsyncFileAudioSource]
 SupportAudioStreamer: TypeAlias = Union[AsyncCallbackSoundDeviceStreamer, AsyncThreadSoundDeviceStreamer]

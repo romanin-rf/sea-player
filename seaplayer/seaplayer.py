@@ -1,13 +1,14 @@
 import os
 from textual import on, work
+from textual.color import Color
 from textual.app import App, ComposeResult
-from textual.widgets import Label, Input, Button, Header, Footer, LoadingIndicator
+from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
 # > Pillow
 from PIL import Image
 # > Typing
 from typing_extensions import (
-    Literal
+    Tuple
 )
 # > Local Import's
 from .units import (
@@ -19,18 +20,17 @@ from .config import Config
 from .languages import LanguageLoader
 from .objects.progressbar import PlaybackProgress
 from .objects.image import ImageWidget
+from .objects.agt import AnimatedGradientText
 from .others.cache import Cacher
 from ._types import PlaybackMode
 
 # ! Template Variables
 
-class NullWidget(LoadingIndicator):
-    DEFAULT_CSS = """
-    NullWidget {
-        height: 1fr;
-        width: 1fr;
-    }
-    """
+
+
+def null_widget(text: str):
+    yield from []
+    yield AnimatedGradientText( text )
 
 # ! SeaPlayer Main Application
 class SeaPlayer(App[None]):
@@ -65,15 +65,7 @@ class SeaPlayer(App[None]):
     
     # ^ Workers
     
-    @work(
-        name="seaplayer-playback-loop",
-        description="SeaPlayer Playback Loop",
-        group="seaplayer-owner",
-        exit_on_error=True,
-        thread=True
-    )
-    async def __playback_loop__(self):
-        return None
+    # // Code...
     
     # ^ On Methods
     
@@ -153,6 +145,6 @@ class SeaPlayer(App[None]):
                         )
                         yield self.player_playback_switch_button
         with self.playlist_box:
-            yield NullWidget() #yield self.playlist_view
+            yield from null_widget('!!! SOON !!!') #yield self.playlist_view
             yield self.playlist_sound_input
         yield Footer()

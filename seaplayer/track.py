@@ -1,3 +1,6 @@
+import os
+import asyncio
+from asyncio.queues import PriorityQueue
 from uuid import uuid4, UUID
 from enum import Flag, auto
 # > Typing
@@ -29,6 +32,7 @@ class Playbacker:
         self.state: PlaybackerState = PlaybackerState(0)
         self.volume: float = float(volume or 1.0)
         self.piece_size: float = float(piece_size or 0.1)
+        self.queue = PriorityQueue()
         self.callback = callback
         self.__running = False
     
@@ -47,19 +51,52 @@ class Playbacker:
     async def __loop__(self) -> None:
         self.__running = True
         while self.__running:
-            pass
+            # TODO: Написать очередь обработки команд
+            await asyncio.wait()
     
     async def select_by_uuid(self, __uuid: UUID) -> None:
-        pass
+        track = self.tracks.get(__uuid, None)
+        if track is not None:
+            if track.uuid != self.selected_track_uuid:
+                await self.stop()
+                self.selected_track = track
+                self.selected_track_uuid = __uuid
     
     async def select_by_track(self, __track: 'Track') -> None:
-        pass
+        if __track.uuid in self.tracks.keys():
+            if __track.uuid != self.selected_track_uuid:
+                await self.stop()
+                self.selected_track = __track
+                self.selected_track_uuid = __track.uuid
+    
+    async def select_next(self) -> UUID:
+        tracks_uuids = list(self.tracks.keys())
+        if len(tracks_uuids) > 0:
+            selected_track_index = tracks_uuids.index(self.selected_track_uuid)
+            if (selected_track_index + 1) < len(tracks_uuids):
+                await self.select_by_uuid(tracks_uuids[selected_track_index + 1])
+            else:
+                await self.select_by_uuid(tracks_uuids[0])
     
     async def play(self) -> None:
-        pass
+        if PlaybackerState.PLAYING not in self.state:
+            self.state |= PlaybackerState.PLAYING
+            # TODO: Нужно как-то сделать вызов события начала воспроизведения
     
     async def stop(self) -> None:
-        pass
+        if PlaybackerState.PLAYING in self.state:
+            self.state &= ~PlaybackerState.PLAYING
+            # TODO: Нужно как-то сделать вызов события остановки воспроизведения
+    
+    async def pause(self) -> None:
+        if PlaybackerState.PAUSED not in self.state:
+            self.state |= PlaybackerState.PAUSED
+            # TODO: Нужно как-то сделать вызов события паузы
+    
+    async def unpause(self) -> None:
+        if PlaybackerState.PAUSED in self.state:
+            self.state &= ~PlaybackerState.PAUSED
+            # TODO: Нужно как-то сделать вызов события снятия с паузы
 
     # ^ Playlist Methods
     
@@ -89,6 +126,12 @@ class Track:
     def __del__(self) -> None:
         del self.source
     
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}(source={self.source!r})"
+    
+    def __repr__(self) -> str:
+        return self.__str__()
+    
     # ^ Propertyes
     
     @property
@@ -103,14 +146,14 @@ class Track:
     def playing(self) -> bool:
         if self.playbacker.selected_track is not None:
             if self.playbacker.selected_track_uuid == self.uuid:
-                return PlayerState.PLAYING in self.playbacker.state
+                return PlaybackerState.PLAYING in self.playbacker.state
         return False
     
     @property
     def paused(self) -> bool:
         if self.playbacker.selected_track is not None:
             if self.playbacker.selected_track_uuid == self.uuid:
-                return PlayerState.PAUSED in self.playbacker.state
+                return PlaybackerState.PAUSED in self.playbacker.state
         return False
     
     @property
@@ -123,6 +166,31 @@ class Track:
     def duration(self) -> float:
         return self.source.sfio.frames / self.source.samplerate
     
+    @property
+    def cover(self):
+        return self.source.metadata.icon
+    
+    # ^ Playback Methods
+    
+    def __playback_name__(self) -> str:
+        if self.metadata.artist is not None:
+            if self.metadata.title is not None:
+                return f"{self.metadata.artist} - {self.metadata.title}"
+            title = os.path.splitext(self.source.name)[0]
+            return f"{self.metadata.artist} - {title}"
+        return os.path.splitext(self.source.name)[0]
+    
+    def __playback_subtitle__(self) -> str:
+        attrs = []
+        attrs.append(f'{self.source.samplerate} Hz')
+        if 0 > self.source.channels <= 1:
+            attrs.append(f'Mono')
+        else:
+            attrs.append(f'Stereo')
+        attrs.append(f'{round(self.source.bitrate / 1000)} kbps')
+        attrs.append(self.source.format)
+        return ', '.join(attrs)
+    
     # ^ Track Methods
     
     async def get_position(self) -> float:
@@ -133,16 +201,28 @@ class Track:
         await self.source.seek(new_position)
     
     async def play(self) -> None:
-        pass
+        if self.playbacker.selected_track_uuid == self.uuid:
+            await self.playbacker.play()
     
     async def stop(self) -> None:
-        pass
+        if self.playbacker.selected_track_uuid == self.uuid:
+            await self.playbacker.stop()
     
     async def pause(self) -> None:
-        pass
+        if self.playbacker.selected_track_uuid == self.uuid:
+            await self.playbacker.pause()
+    
+    async def unpause(self) -> None:
+        if self.playbacker.selected_track_uuid == self.uuid:
+            await self.playbacker.unpause()
     
     async def get_volume(self) -> float:
         return self.playbacker.volume
     
     async def set_volume(self, __volume: float) -> None:
-        self.playbacker.volume = float(__volume)
+        if self.playbacker.selected_track_uuid == self.uuid:
+            if __volume >= 0:
+                self.playbacker.volume = float(__volume)
+    
+    async def select(self) -> None:
+        await self.playbacker.select_by_track(self)

@@ -5,7 +5,10 @@ from rich.console import RenderableType
 # > Local Imports
 from ..others.ripix import RichPixels
 # > Typing
-from typing_extensions import Union, Optional, Tuple
+from typing_extensions import (
+    Tuple,
+    Union, Optional,
+)
 
 # ! Main Class
 class ImageWidget(Label):
