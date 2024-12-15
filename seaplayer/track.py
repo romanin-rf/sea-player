@@ -4,7 +4,7 @@ from asyncio.queues import PriorityQueue
 from uuid import uuid4, UUID
 from enum import Flag, auto
 # > Typing
-from typing_extensions import Dict, Literal, Optional, Callable
+from typing_extensions import Dict, Literal, Optional, Callable, NamedTuple
 # > Local Imports
 from ._types import SupportAudioSource, SupportAudioStreamer
 
@@ -31,8 +31,7 @@ class Playbacker:
         self.selected_track_uuid: Optional[UUID] = None
         self.state: PlaybackerState = PlaybackerState(0)
         self.volume: float = float(volume or 1.0)
-        self.piece_size: float = float(piece_size or 0.1)
-        self.queue = PriorityQueue()
+        self.piece_size: float = float(piece_size or 0.05)
         self.callback = callback
         self.__running = False
     
@@ -46,13 +45,27 @@ class Playbacker:
     def running(self) -> bool:
         return self.__running
     
-    # ^ Playback Methods
+    # ^ Playback Loop Methods
+    
+    async def __loop_pause__(self) -> None:
+        while self.__running and (PlaybackerState.PAUSED in self.state) and (PlaybackerState.PLAYING in self.state):
+            await asyncio.sleep(0.01)
+    
+    # ^ Playback Spetific Methods
     
     async def __loop__(self) -> None:
         self.__running = True
         while self.__running:
-            # TODO: Написать очередь обработки команд
-            await asyncio.wait()
+            if self.selected_track is not None:
+                if PlaybackerState.PAUSED in self.state:
+                    await self.__loop_pause__()
+                if PlaybackerState.PLAYING in self.state:
+                    if not await self.streamer.is_busy():
+                        data = await self.selected_track.source.readline(self.piece_size)
+                        await self.streamer.send(data * self.volume)
+            await asyncio.sleep(0.01)
+    
+    # ^ Playback Main Methods
     
     async def select_by_uuid(self, __uuid: UUID) -> None:
         track = self.tracks.get(__uuid, None)
@@ -86,6 +99,7 @@ class Playbacker:
     async def stop(self) -> None:
         if PlaybackerState.PLAYING in self.state:
             self.state &= ~PlaybackerState.PLAYING
+            await self.streamer.abort()
             # TODO: Нужно как-то сделать вызов события остановки воспроизведения
     
     async def pause(self) -> None:
@@ -161,6 +175,10 @@ class Track:
         if self.playbacker.selected_track is not None:
             return self.playbacker.selected_track_uuid == self.uuid
         return False
+    
+    @property
+    def frames(self) -> int:
+        return self.source.sfio.frames
     
     @property
     def duration(self) -> float:
