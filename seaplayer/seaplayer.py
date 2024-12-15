@@ -25,9 +25,11 @@ from .units import (
 from .config import Config
 from .languages import LanguageLoader
 # > Local Imports (TUI)
+from .objects.agt import AnimatedGradientText
 from .objects.progressbar import PlaybackProgress
 from .objects.image import ImageWidget
-from .objects.agt import AnimatedGradientText
+from .objects.playlist import PlayListView, PlayListItem
+from .objects.separator import HorizontalSeporator
 # > Local Imports (Spetific)
 from .others.cache import Cacher
 
@@ -119,7 +121,7 @@ class SeaPlayer(App[int]):
         
         self.playlist_box = Container(classes="playlist-box")
         self.playlist_box.border_title = self.ll.get("playlist")
-        #self.playlist_view = PlayListView(classes="playlist-view")
+        self.playlist_view = PlayListView(classes="playlist-container")
         
         self.playlist_sound_input = Input(
             classes="playlist-sound-input", id="soundinput",
@@ -132,7 +134,7 @@ class SeaPlayer(App[int]):
             classes="button-sound-control"
         )
         
-        # * Adding
+        # * Compose
         
         yield Header()
         with self.player_box:
@@ -157,10 +159,31 @@ class SeaPlayer(App[int]):
                         )
                         yield self.player_playback_switch_button
         with self.playlist_box:
-            #yield self.playlist_view
-            yield from null_widget('<PlayListView: DEV>')
+            yield self.playlist_view
+            yield HorizontalSeporator()
             yield self.playlist_sound_input
         yield Footer()
+    
+    async def on_ready(self) -> None:
+        await self.playlist_view.extend(
+            [
+                PlayListItem(
+                    None,
+                    'NBSPLV - Spectate',
+                    '44100 Hz, Stereo, 360 kbps, MP3'
+                ),
+                PlayListItem(
+                    None,
+                    'NBSPLV - Downpour',
+                    '48000 Hz, Stereo, 1260 kbps, FLAC'
+                ),
+                PlayListItem(
+                    None,
+                    'NBSPLV - Algorithm',
+                    '44100 Hz, Mono, 128 kbps, WAV'
+                )
+            ]
+        )
     
     # ^ Textaul Actions
     
@@ -172,5 +195,6 @@ class SeaPlayer(App[int]):
     
     async def run_async(self, *args, **kwargs):
         self.streamer = AsyncCallbackSoundDeviceStreamer()
+        self.playbacker = Playbacker(self.streamer, volume=self.cacher.var('volume', 1.0))
         await self.streamer.start()
         return await super().run_async(*args, **kwargs)

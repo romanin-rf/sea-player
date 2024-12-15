@@ -49,8 +49,3 @@
     width: 1fr;
     height: 3;
 }
-
-.fuller-box {
-    width: 1fr;
-    height: 1fr;
-}

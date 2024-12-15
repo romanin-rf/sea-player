@@ -9,6 +9,21 @@ from typing_extensions import Dict, Literal, Optional, Callable, NamedTuple
 # > Local Imports
 from ._types import SupportAudioSource, SupportAudioStreamer
 
+# ! Constants
+
+CHANNELS_NAMES = {
+    1: 'Mono (1.0)',
+    2: 'Stereo (2.0)',
+    3: 'Stereo (2.1)',
+    4: 'Quadro (4.0)',
+    5: 'Voluminous (4.1)',
+    6: 'Voluminous (5.1)',
+    7: 'Voluminous (6.1)',
+    8: 'Voluminous (7.1)',
+    10: 'Voluminous (9.1)',
+    12: 'Voluminous (10.2/11.1)',
+}
+
 # ! Track Controller State
 
 class PlaybackerState(Flag):
@@ -21,19 +36,18 @@ class Playbacker:
     def __init__(
         self,
         streamer: SupportAudioStreamer,
+        *,
         volume: Optional[float]=None,
         piece_size: Optional[float]=None,
         tracks: Optional[Dict[UUID, 'Track']]=None,
-        callback: Optional[ Callable[[Literal['add', 'remove', 'select'], 'Track'], None] ]=None
     ) -> None:
         self.streamer = streamer
         self.tracks: Dict[UUID, 'Track'] = tracks or {}
         self.selected_track: Optional[Track] = None
         self.selected_track_uuid: Optional[UUID] = None
         self.state: PlaybackerState = PlaybackerState(0)
-        self.volume: float = float(volume or 1.0)
+        self.volume: float = volume if volume is not None else 1.0
         self.piece_size: float = float(piece_size or 0.05)
-        self.callback = callback
         self.__running = False
     
     # ^ Propertyes
@@ -105,6 +119,8 @@ class Playbacker:
         if PlaybackerState.PLAYING in self.state:
             self.state &= ~PlaybackerState.PLAYING
             await self.streamer.abort()
+            if self.selected_track is not None:
+                await self.selected_track.set_position(0)
             # TODO: Нужно как-то сделать вызов события остановки воспроизведения
     
     async def pause(self) -> None:
@@ -146,7 +162,7 @@ class Track:
         del self.source
     
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}(source={self.source!r})"
+        return f"(<{self.__class__.__name__}> with {self.source!r})"
     
     def __repr__(self) -> str:
         return self.__str__()
@@ -206,10 +222,8 @@ class Track:
     def __playback_subtitle__(self) -> str:
         attrs = []
         attrs.append(f'{self.source.samplerate} Hz')
-        if 0 > self.source.channels <= 1:
-            attrs.append(f'Mono')
-        else:
-            attrs.append(f'Stereo')
+        if self.source.channels > 0:
+            attrs.append(CHANNELS_NAMES.get(self.source.channels, f'{self.source.channels} channels'))
         attrs.append(f'{round(self.source.bitrate / 1000)} kbps')
         attrs.append(self.source.format)
         return ', '.join(attrs)
