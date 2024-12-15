@@ -1,5 +1,9 @@
 import itertools
-from typing import Any, Iterable, Generator
+from typing_extensions import (
+    Any,
+    Iterable,
+    Generator,
+)
 
 # ! Itertools
 

@@ -3,6 +3,7 @@ import asyncio
 from asyncio.queues import PriorityQueue
 from uuid import uuid4, UUID
 from enum import Flag, auto
+from numpy import ndarray
 # > Typing
 from typing_extensions import Dict, Literal, Optional, Callable, NamedTuple
 # > Local Imports
@@ -53,6 +54,9 @@ class Playbacker:
     
     # ^ Playback Spetific Methods
     
+    async def __handler_audio__(self, data: ndarray):
+        return data * self.volume
+    
     async def __loop__(self) -> None:
         self.__running = True
         while self.__running:
@@ -62,7 +66,8 @@ class Playbacker:
                 if PlaybackerState.PLAYING in self.state:
                     if not await self.streamer.is_busy():
                         data = await self.selected_track.source.readline(self.piece_size)
-                        await self.streamer.send(data * self.volume)
+                        handlered_data = await self.__handler_audio__(data)
+                        await self.streamer.send(handlered_data)
             await asyncio.sleep(0.01)
     
     # ^ Playback Main Methods

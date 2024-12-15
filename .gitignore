@@ -2,9 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+__*.py
 
-# My Python Files
+# My's
 __clean.py
+notes/
 
 # Poetry
 poetry.lock

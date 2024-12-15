@@ -3,25 +3,33 @@ from textual import on, work
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
+# > SeaPlayer (Audio)
+from seaplayer_audio import AsyncCallbackSoundDeviceStreamer
 # > Pillow
 from PIL import Image
 # > Typing
 from typing_extensions import (
     Tuple
 )
-# > Local Import's
+# > Local Imports (Types)
+from ._types import PlaybackMode, SupportAudioStreamer
+# > Local Imports (seaplayer)
+from .track import Track, PlaybackerState, Playbacker
+# > Local Imports (Units)
 from .units import (
     __title__, __version__,
     CSS_LOCALDIR, LANGUAGES_DIRPATH, CACHE_DIRPATH, CONFIG_FILEPATH,
     IMG_NOT_FOUND
 )
+# > Local Imports (Main)
 from .config import Config
 from .languages import LanguageLoader
+# > Local Imports (TUI)
 from .objects.progressbar import PlaybackProgress
 from .objects.image import ImageWidget
 from .objects.agt import AnimatedGradientText
+# > Local Imports (Spetific)
 from .others.cache import Cacher
-from ._types import PlaybackMode
 
 # ! Template Variables
 
@@ -49,7 +57,10 @@ class SeaPlayer(App[int]):
     
     # ^ Playback Variables
     
+    streamer: SupportAudioStreamer
     playback_mode = cacher.var('playback_mode', PlaybackMode.PLAY)
+    
+    # ^ Dunder Methods
     
     # ^ Spetific Methods
     
@@ -101,7 +112,7 @@ class SeaPlayer(App[int]):
         
         # * Image Object Init
         
-        self.player_selected_label = Label("<None>", classes="player-selected-label")
+        self.player_selected_label = next(null_widget('<Label: DEV>'))#Label("<None>", classes="player-selected-label")
         self.player_image = ImageWidget(IMG_NOT_FOUND)
         
         # * Compositions Screen
@@ -147,11 +158,19 @@ class SeaPlayer(App[int]):
                         yield self.player_playback_switch_button
         with self.playlist_box:
             #yield self.playlist_view
-            yield from null_widget('Development...')
+            yield from null_widget('<PlayListView: DEV>')
             yield self.playlist_sound_input
         yield Footer()
     
-    # ^ Quit Methods
+    # ^ Textaul Actions
     
-    async def on_quit(self) -> None:
-        self.exit(0)
+    async def action_quit(self):
+        await self.streamer.stop()
+        return await super().action_quit()
+    
+    # ^ Textual Methods
+    
+    async def run_async(self, *args, **kwargs):
+        self.streamer = AsyncCallbackSoundDeviceStreamer()
+        await self.streamer.start()
+        return await super().run_async(*args, **kwargs)
