@@ -1,6 +1,5 @@
 import os
 from textual import on, work
-from textual.color import Color
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
@@ -26,14 +25,12 @@ from ._types import PlaybackMode
 
 # ! Template Variables
 
-
-
 def null_widget(text: str):
     yield from []
     yield AnimatedGradientText( text )
 
 # ! SeaPlayer Main Application
-class SeaPlayer(App[None]):
+class SeaPlayer(App[int]):
     # ^ Main Settings
     TITLE = f"{__title__} v{__version__}"
     ENABLE_COMMAND_PALETTE = False
@@ -98,14 +95,17 @@ class SeaPlayer(App[None]):
     
     def compose(self) -> ComposeResult:
         # * Play Screen
+        
         self.player_box = Container(classes="player-box")
         self.player_box.border_title = self.ll.get("player")
         
         # * Image Object Init
+        
         self.player_selected_label = Label("<None>", classes="player-selected-label")
         self.player_image = ImageWidget(IMG_NOT_FOUND)
         
         # * Compositions Screen
+        
         self.playlist_box = Container(classes="playlist-box")
         self.playlist_box.border_title = self.ll.get("playlist")
         #self.playlist_view = PlayListView(classes="playlist-view")
@@ -122,6 +122,7 @@ class SeaPlayer(App[None]):
         )
         
         # * Adding
+        
         yield Header()
         with self.player_box:
             with Vertical():
@@ -145,6 +146,12 @@ class SeaPlayer(App[None]):
                         )
                         yield self.player_playback_switch_button
         with self.playlist_box:
-            yield from null_widget('!!! SOON !!!') #yield self.playlist_view
+            #yield self.playlist_view
+            yield from null_widget('Development...')
             yield self.playlist_sound_input
         yield Footer()
+    
+    # ^ Quit Methods
+    
+    async def on_quit(self) -> None:
+        self.exit(0)

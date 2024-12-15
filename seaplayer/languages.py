@@ -7,7 +7,7 @@ from typing_extensions import (
     Optional
 )
 # > Local Imports
-from .functions import formater
+from .functions import formattrs
 from .exceptions import LanguageNotExistError, LanguageNotLoadedError
 
 # ! Language Class
@@ -49,7 +49,7 @@ class Language:
     
     # ? Magic Methods
     def __str__(self) -> str:
-        attrs = formater(
+        attrs = formattrs(
             name=self.__name,
             title=self.__title,
             mark=self.__mark,
@@ -198,7 +198,7 @@ class LanguageLoader:
     
     # ? Magic Methods
     def __str__(self) -> str:
-        form = formater(
+        form = formattrs(
             name=self.__name,
             default_lang_mark=self.__dlm,
             main_lang_mark=self.__mlm,
