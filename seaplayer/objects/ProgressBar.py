@@ -24,7 +24,7 @@ class PlaybackProgress(Static):
         if getfunc is not None:
             self._getfunc = getfunc
         else:
-            self._getfunc = lambda: ("0:00 |   0%", None, None)
+            self._getfunc = lambda: ("00:00 |   0%", None, None)
     
     def on_mount(self) -> None:
         self.update_render = self.set_interval(1 / self._fps, self.update_progress_bar)

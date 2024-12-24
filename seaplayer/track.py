@@ -1,13 +1,13 @@
 import os
 import asyncio
-from asyncio.queues import PriorityQueue
-from uuid import uuid4, UUID
-from enum import Flag, auto
 from numpy import ndarray
+from enum import Flag, auto
+from uuid import uuid4, UUID
+from pathlib import Path
 # > Typing
 from typing_extensions import Dict, Literal, Optional, Callable, NamedTuple
 # > Local Imports
-from ._types import SupportAudioSource, SupportAudioStreamer
+from ._types import SupportAudioSource, SupportAudioStreamer, FilePathType
 
 # ! Constants
 
@@ -84,6 +84,15 @@ class Playbacker:
                         await self.streamer.send(handlered_data)
             await asyncio.sleep(0.01)
     
+    # ^ Playbacker Check Methods
+    
+    def _is_filepath(self, value: FilePathType) -> bool:
+        try:
+            path = Path(value).resolve()
+        except:
+            return False
+        return path.is_file() and path.exists()
+    
     # ^ Playback Main Methods
     
     async def select_by_uuid(self, __uuid: UUID) -> None:
@@ -132,7 +141,15 @@ class Playbacker:
         if PlaybackerState.PAUSED in self.state:
             self.state &= ~PlaybackerState.PAUSED
             # TODO: Нужно как-то сделать вызов события снятия с паузы
-
+    
+    async def exists_track_by_input(self, __input: FilePathType) -> bool:
+        if self._is_filepath(__input):
+            filepath = Path(__input).resolve()
+            for track in self.tracks.values():
+                if filepath.samefile(track.source.name):
+                    return True
+        return False
+    
     # ^ Playlist Methods
     
     def add(self, __track: 'Track') -> UUID:

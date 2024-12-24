@@ -1,4 +1,5 @@
 import os
+import glob
 from textual import on, work
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Input, Button, Header, Footer
@@ -9,7 +10,7 @@ from seaplayer_audio import AsyncCallbackSoundDeviceStreamer
 from PIL import Image
 # > Typing
 from typing_extensions import (
-    Tuple
+    List
 )
 # > Local Imports (Types)
 from ._types import PlaybackMode, SupportAudioStreamer
@@ -60,6 +61,7 @@ class SeaPlayer(App[int]):
     # ^ Playback Variables
     
     streamer: SupportAudioStreamer
+    playbacker: Playbacker
     playback_mode = cacher.var('playback_mode', PlaybackMode.PLAY)
     
     # ^ Dunder Methods
@@ -71,7 +73,14 @@ class SeaPlayer(App[int]):
     
     def get_playback_statuses_text(self) -> str:
         # TODO: Написать получение данных о текущем статусе воспроизведения
-        return "0:00 |   0%", None, None
+        return f"00:00 | {round(self.playbacker.volume*100):>3}%", None, None
+    
+    def _globpath(self, path: str) -> List[str]:
+        filepaths = []
+        for filepath in glob.glob(path, recursive=True):
+            if not self.playbacker.exists_track_by_input(filepath):
+                filepaths.append(os.path.abspath(filepath))
+        return filepaths
     
     # ^ Workers
     
@@ -92,17 +101,23 @@ class SeaPlayer(App[int]):
     @on(Button.Pressed, "#button-pause")
     async def pause_playback(self, event: Button.Pressed) -> None:
         # TODO: Написать метод паузы воспроизведения
-        pass
+        if self.playbacker.selected_track is None:
+            return
     
     @on(Button.Pressed, "#button-play-stop")
     async def play_or_stop_playback(self, event: Button.Pressed) -> None:
         # TODO: Написать метод воспроизведения или остановки воспроизведения
-        pass
+        if self.playbacker.selected_track is None:
+            return
     
     @on(Input.Submitted, "#soundinput")
     async def sound_input_submitted(self, event: Input.Submitted) -> None:
         # TODO: Написать метод отправки на обработку input-а
-        pass
+        event.input.clear()
+        values = self._globpath()
+        if len(values) == 0:
+            return
+        
     
     # ^ Compose Method
     
@@ -185,6 +200,11 @@ class SeaPlayer(App[int]):
             ]
         )
     
+    async def on_run(self) -> None:
+        self.streamer = AsyncCallbackSoundDeviceStreamer()
+        self.playbacker = Playbacker(self.streamer, volume=1.0)
+        await self.streamer.start()
+    
     # ^ Textaul Actions
     
     async def action_quit(self):
@@ -194,7 +214,5 @@ class SeaPlayer(App[int]):
     # ^ Textual Methods
     
     async def run_async(self, *args, **kwargs):
-        self.streamer = AsyncCallbackSoundDeviceStreamer()
-        self.playbacker = Playbacker(self.streamer, volume=self.cacher.var('volume', 1.0))
-        await self.streamer.start()
+        await self.on_run()
         return await super().run_async(*args, **kwargs)
