@@ -1,8 +1,7 @@
-import asyncio
 import itertools
 from typing_extensions import (
     Any,
-    Iterable, Generator, AsyncGenerator,
+    Iterable, Generator,
     TypeVar,
 )
 

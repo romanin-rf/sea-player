@@ -8,7 +8,7 @@ from typing_extensions import (
 )
 # > Local Imports
 from seaplayer_audio.audiosources import AsyncFileAudioSource
-from seaplayer_audio.streamers import AsyncCallbackSoundDeviceStreamer, AsyncThreadSoundDeviceStreamer
+from seaplayer_audio.streamers import CallbackSoundDeviceStreamer, ThreadSoundDeviceStreamer
 
 # ! Type Aliases
 
@@ -16,7 +16,7 @@ PathlibType: TypeAlias = Union[Path, PurePath, PosixPath, PurePosixPath, PureWin
 FilePathType: TypeAlias = Union[str, bytes, PathlibType, PathLike[str], PathLike[bytes]]
 
 SupportAudioSource: TypeAlias = Union[AsyncFileAudioSource]
-SupportAudioStreamer: TypeAlias = Union[AsyncCallbackSoundDeviceStreamer, AsyncThreadSoundDeviceStreamer]
+SupportAudioStreamer: TypeAlias = Union[CallbackSoundDeviceStreamer, ThreadSoundDeviceStreamer]
 
 # ! Playback Types
 

@@ -3,11 +3,11 @@ import asyncio
 from numpy import ndarray
 from enum import Flag, auto
 from uuid import uuid4, UUID
-from pathlib import Path
+from textual.app import App
 # > Typing
-from typing_extensions import Dict, Literal, Optional, Callable, NamedTuple
+from typing_extensions import Dict, Optional
 # > Local Imports
-from ._types import SupportAudioSource, SupportAudioStreamer, FilePathType
+from ._types import SupportAudioSource, SupportAudioStreamer
 
 # ! Constants
 
@@ -35,19 +35,21 @@ class PlaybackerState(Flag):
 class Playbacker:
     def __init__(
         self,
+        app: App,
         streamer: SupportAudioStreamer,
         *,
         volume: Optional[float]=None,
         piece_size: Optional[float]=None,
         tracks: Optional[Dict[UUID, 'Track']]=None,
     ) -> None:
-        self.streamer = streamer
+        self.app: App = app
+        self.streamer: SupportAudioStreamer = streamer
         self.tracks: Dict[UUID, 'Track'] = tracks or {}
         self.selected_track: Optional[Track] = None
         self.selected_track_uuid: Optional[UUID] = None
         self.state: PlaybackerState = PlaybackerState(0)
         self.volume: float = volume if volume is not None else 1.0
-        self.piece_size: float = float(piece_size or 0.05)
+        self.piece_size: float = float(piece_size or 0.1)
         self.__running = False
     
     # ^ Propertyes
@@ -68,7 +70,7 @@ class Playbacker:
     
     # ^ Playback Spetific Methods
     
-    async def __handler_audio__(self, data: ndarray):
+    def __handler_audio__(self, data: ndarray):
         return data * self.volume
     
     async def __loop__(self) -> None:
@@ -76,22 +78,17 @@ class Playbacker:
         while self.__running:
             if self.selected_track is not None:
                 if PlaybackerState.PAUSED in self.state:
-                    await self.__loop_pause__()
+                    self.app.call_from_thread(self.__loop_pause__)
                 if PlaybackerState.PLAYING in self.state:
-                    if not await self.streamer.is_busy():
-                        data = await self.selected_track.source.readline(self.piece_size)
-                        handlered_data = await self.__handler_audio__(data)
-                        await self.streamer.send(handlered_data)
+                    if not self.streamer.is_busy():
+                        data = self.app.call_from_thread(self.selected_track.source.readline, self.piece_size)
+                        if len(data) == 0:
+                            self.app.call_from_thread(self.stop)
+                            # TODO: Создать event для указания об окончании трека
+                            continue
+                        handlered_data = self.__handler_audio__(data)
+                        self.streamer.send(handlered_data)
             await asyncio.sleep(0.01)
-    
-    # ^ Playbacker Check Methods
-    
-    #def _is_filepath(self, value: FilePathType) -> bool:
-    #    try:
-    #        path = Path(value).resolve()
-    #    except:
-    #        return False
-    #    return path.is_file() and path.exists()
     
     # ^ Playback Main Methods
     
@@ -126,8 +123,8 @@ class Playbacker:
     
     async def stop(self) -> None:
         if PlaybackerState.PLAYING in self.state:
-            self.state &= ~PlaybackerState.PLAYING
-            await self.streamer.abort()
+            self.state = PlaybackerState(0)
+            self.streamer.abort()
             if self.selected_track is not None:
                 await self.selected_track.set_position(0)
             # TODO: Нужно как-то сделать вызов события остановки воспроизведения

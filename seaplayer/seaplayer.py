@@ -1,13 +1,11 @@
 import os
-import glob
 from uuid import UUID
-from textual import on, work
+from textual import on
 from textual.app import App, ComposeResult
-from textual.worker import Worker, WorkerCancelled, WorkerFailed
-from textual.widgets import Label, Input, Button, Header, Footer, ListView
+from textual.widgets import Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
 # > SeaPlayer (Audio)
-from seaplayer_audio import AsyncCallbackSoundDeviceStreamer
+from seaplayer_audio import CallbackSoundDeviceStreamer
 # > Pillow
 from PIL import Image
 # > Typing
@@ -18,7 +16,7 @@ from typing_extensions import (
 # > Local Imports (Types)
 from ._types import PlaybackMode, SupportAudioStreamer
 # > Local Imports (seaplayer)
-from .track import Track, PlaybackerState, Playbacker
+from .track import PlaybackerState, Playbacker
 from .input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
 from .units import (
@@ -78,8 +76,12 @@ class SeaPlayer(App[int]):
     def get_playback_mode_text(self) -> str:
         return self.ll.get(f"player.button.mode.{self.playback_mode.name.lower()}")
     
-    def get_playback_statuses_text(self) -> str:
+    async def get_playback_statuses_text(self) -> str:
         # TODO: Написать получение данных о текущем статусе воспроизведения
+        if self.playbacker.selected_track is not None:
+            position = await self.playbacker.selected_track.get_position()
+            text = f"{round(position//60):0>2}:{round(position%60):0>2} | {round(self.playbacker.volume*100):>3}%"
+            return text, position, self.playbacker.selected_track.duration
         return f"00:00 | {round(self.playbacker.volume*100):>3}%", None, None
     
     # ^ Workers
@@ -87,7 +89,7 @@ class SeaPlayer(App[int]):
     async def worker_input_submitted(self, inputted: str) -> None:
         for handler in self.INPUT_HANDLERS:
             if handler.is_this(inputted):
-                for track_uuid in handler.handle(inputted):
+                for track_uuid in handler.handle(inputted, loop=self._loop):
                     self.call_from_thread(
                         self.playlist_view.create_item,
                         track_uuid,
@@ -96,9 +98,10 @@ class SeaPlayer(App[int]):
                     )
     
     async def worker_track_selected(self, uuid: UUID) -> None:
-        await self.playbacker.select_by_uuid(uuid)
+        self.call_from_thread(self.playbacker.stop)
+        self.call_from_thread(self.playbacker.select_by_uuid, uuid)
         if self.playbacker.selected_track is not None:
-            await self.player_image.update_image(self.playbacker.selected_track.cover)
+            self.call_from_thread(self.player_image.update_image, self.playbacker.selected_track.cover)
     
     # ^ On Methods
     
@@ -117,12 +120,20 @@ class SeaPlayer(App[int]):
         # TODO: Написать метод паузы воспроизведения
         if self.playbacker.selected_track is None:
             return
+        if self.playbacker.state == PlaybackerState.PAUSED:
+            await self.playbacker.unpause()
+        else:
+            await self.playbacker.pause()
     
     @on(Button.Pressed, "#button-play-stop")
     async def play_or_stop_playback(self, event: Button.Pressed) -> None:
         # TODO: Написать метод воспроизведения или остановки воспроизведения
         if self.playbacker.selected_track is None:
             return
+        if self.playbacker.state == PlaybackerState.PLAYING:
+            await self.playbacker.stop()
+        else:
+            await self.playbacker.play()
     
     @on(Input.Submitted, "#soundinput")
     async def sound_input_submitted(self, event: Input.Submitted) -> None:
@@ -208,22 +219,22 @@ class SeaPlayer(App[int]):
         yield Footer()
     
     async def on_ready(self) -> None:
+        self.streamer = CallbackSoundDeviceStreamer()
+        self.playbacker = Playbacker(self, self.streamer, volume=1.0)
         for input_handler_type in self.INPUT_HANDLERS_TYPES:
             self.INPUT_HANDLERS.append(input_handler_type(self.playbacker))
-    
-    async def on_run(self) -> None:
-        self.streamer = AsyncCallbackSoundDeviceStreamer()
-        self.playbacker = Playbacker(self.streamer, volume=1.0)
-        await self.streamer.start()
+        self.streamer.start()
+        self.run_worker(
+            self.playbacker.__loop__,
+            name='SeaPlayer Playback Loop',
+            group='seaplayer.playback',
+            exit_on_error=False,
+            exclusive=True,
+            thread=True,
+        )
     
     # ^ Textaul Actions
     
     async def action_quit(self):
-        await self.streamer.stop()
+        self.streamer.stop()
         return await super().action_quit()
-    
-    # ^ Textual Methods
-    
-    async def run_async(self, *args, **kwargs):
-        await self.on_run()
-        return await super().run_async(*args, **kwargs)

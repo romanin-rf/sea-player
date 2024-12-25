@@ -1,7 +1,20 @@
-from textual.widgets import Static, ProgressBar
+import inspect
+from textual.widgets import Static
 from rich.progress import Progress, BarColumn, TextColumn
 # > Typing
-from typing_extensions import Optional, Callable, Tuple
+from typing_extensions import (
+    Any, Tuple,
+    Union, Optional,
+    Callable, Coroutine, Awaitable
+)
+
+# ! Types
+
+GetCallback = Union[
+    Callable[[], Tuple[str, Optional[float], Optional[float]]],
+    Callable[[], Coroutine[Any, Any, Tuple[str, Optional[float], Optional[float]]]],
+    Callable[[], Awaitable[Tuple[str, Optional[float], Optional[float]]]]
+]
 
 # ! Main Class
 
@@ -14,7 +27,7 @@ class PlaybackProgress(Static):
     
     def __init__(
         self,
-        getfunc: Optional[Callable[[], Tuple[str, Optional[float], Optional[float]]]]=None,
+        getfunc: Optional[GetCallback]=None,
         fps: int=8
     ) -> None:
         super().__init__()
@@ -22,9 +35,17 @@ class PlaybackProgress(Static):
         self._task_id = self._bar.add_task("", total=None)
         self._fps = fps
         if getfunc is not None:
-            self._getfunc = getfunc
+            self._getfunc: GetCallback = getfunc
         else:
-            self._getfunc = lambda: ("00:00 |   0%", None, None)
+            self._getfunc: GetCallback = lambda: ("00:00 |   0%", None, None)
+        if inspect.iscoroutinefunction(self._getfunc):
+            self.run_mode = 1
+        elif inspect.isawaitable(self._getfunc):
+            self.run_mode = 2
+        elif callable(self._getfunc):
+            self.run_mode = 0
+        else:
+            raise RuntimeError
     
     def on_mount(self) -> None:
         self.update_render = self.set_interval(1 / self._fps, self.update_progress_bar)
@@ -42,8 +63,17 @@ class PlaybackProgress(Static):
             description=description
         )
     
+    async def __getting(self) -> Tuple[str, Optional[float], Optional[float]]:
+        if self.run_mode == 0:
+            return self._getfunc()
+        elif self.run_mode == 1:
+            return await self._getfunc()
+        elif self.run_mode == 2:
+            return await self._getfunc
+        return "00:00 |   0%", None, None
+    
     async def update_progress_bar(self) -> None:
-        d, c, t = self._getfunc()
+        d, c, t = await self.__getting()
         needed_width = self.size[0] - len(d) - 1
         if self._bar.columns[0].bar_width != needed_width:
             self._bar.columns[0].bar_width = needed_width
