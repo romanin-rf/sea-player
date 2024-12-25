@@ -86,12 +86,12 @@ class Playbacker:
     
     # ^ Playbacker Check Methods
     
-    def _is_filepath(self, value: FilePathType) -> bool:
-        try:
-            path = Path(value).resolve()
-        except:
-            return False
-        return path.is_file() and path.exists()
+    #def _is_filepath(self, value: FilePathType) -> bool:
+    #    try:
+    #        path = Path(value).resolve()
+    #    except:
+    #        return False
+    #    return path.is_file() and path.exists()
     
     # ^ Playback Main Methods
     
@@ -142,13 +142,13 @@ class Playbacker:
             self.state &= ~PlaybackerState.PAUSED
             # TODO: Нужно как-то сделать вызов события снятия с паузы
     
-    async def exists_track_by_input(self, __input: FilePathType) -> bool:
-        if self._is_filepath(__input):
-            filepath = Path(__input).resolve()
-            for track in self.tracks.values():
-                if filepath.samefile(track.source.name):
-                    return True
-        return False
+    #async def exists_track_by_filepath(self, __filepath: FilePathType) -> bool:
+    #    if self._is_filepath(__filepath):
+    #        filepath = Path(__filepath).resolve()
+    #        for track in self.tracks.values():
+    #            if filepath.samefile(track.source.name):
+    #                return True
+    #    return False
     
     # ^ Playlist Methods
     

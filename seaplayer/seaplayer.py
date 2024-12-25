@@ -1,8 +1,10 @@
 import os
 import glob
+from uuid import UUID
 from textual import on, work
 from textual.app import App, ComposeResult
-from textual.widgets import Label, Input, Button, Header, Footer
+from textual.worker import Worker, WorkerCancelled, WorkerFailed
+from textual.widgets import Label, Input, Button, Header, Footer, ListView
 from textual.containers import Container, Vertical, Horizontal
 # > SeaPlayer (Audio)
 from seaplayer_audio import AsyncCallbackSoundDeviceStreamer
@@ -10,12 +12,14 @@ from seaplayer_audio import AsyncCallbackSoundDeviceStreamer
 from PIL import Image
 # > Typing
 from typing_extensions import (
-    List
+    List,
+    Type
 )
 # > Local Imports (Types)
 from ._types import PlaybackMode, SupportAudioStreamer
 # > Local Imports (seaplayer)
 from .track import Track, PlaybackerState, Playbacker
+from .input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
 from .units import (
     __title__, __version__,
@@ -48,9 +52,12 @@ class SeaPlayer(App[int]):
     CSS_PATH = [
         os.path.join(CSS_LOCALDIR, "seaplayer.tcss"),
         #os.path.join(CSS_LOCALDIR, "configurate.tcss"),
-        #os.path.join(CSS_LOCALDIR, "unknown.tcss"),
-        #os.path.join(CSS_LOCALDIR, "objects.tcss")
     ]
+    
+    # ^ Runtime Constants
+    
+    INPUT_HANDLERS_TYPES: List[Type[InputHandlerBase]] = [ FileGlobInputHandler ]
+    INPUT_HANDLERS: List[InputHandlerBase] = []
     
     # ^ Runtime Variables
     
@@ -75,16 +82,23 @@ class SeaPlayer(App[int]):
         # TODO: Написать получение данных о текущем статусе воспроизведения
         return f"00:00 | {round(self.playbacker.volume*100):>3}%", None, None
     
-    def _globpath(self, path: str) -> List[str]:
-        filepaths = []
-        for filepath in glob.glob(path, recursive=True):
-            if not self.playbacker.exists_track_by_input(filepath):
-                filepaths.append(os.path.abspath(filepath))
-        return filepaths
-    
     # ^ Workers
     
-    # // Code...
+    async def worker_input_submitted(self, inputted: str) -> None:
+        for handler in self.INPUT_HANDLERS:
+            if handler.is_this(inputted):
+                for track_uuid in handler.handle(inputted):
+                    self.call_from_thread(
+                        self.playlist_view.create_item,
+                        track_uuid,
+                        self.playbacker.tracks[track_uuid].__playback_name__(),
+                        self.playbacker.tracks[track_uuid].__playback_subtitle__(),
+                    )
+    
+    async def worker_track_selected(self, uuid: UUID) -> None:
+        await self.playbacker.select_by_uuid(uuid)
+        if self.playbacker.selected_track is not None:
+            await self.player_image.update_image(self.playbacker.selected_track.cover)
     
     # ^ On Methods
     
@@ -112,12 +126,26 @@ class SeaPlayer(App[int]):
     
     @on(Input.Submitted, "#soundinput")
     async def sound_input_submitted(self, event: Input.Submitted) -> None:
-        # TODO: Написать метод отправки на обработку input-а
-        event.input.clear()
-        values = self._globpath()
-        if len(values) == 0:
+        inputted = event.value.strip()
+        if len(inputted) == 0:
             return
-        
+        event.input.clear()
+        self.run_worker(
+            self.worker_input_submitted(inputted),
+            name='Input Submitted Handler',
+            group='seaplayer.main',
+            thread=True,
+        )
+    
+    @on(PlayListView.Selected, ".playlist-container")
+    async def sound_selected(self, event: PlayListView.Selected) -> None:
+        plitem: PlayListItem = event.item
+        self.run_worker(
+            self.worker_track_selected(plitem.uuid),
+            name='Track Selected Work',
+            group='seaplayer.main',
+            thread=True,
+        )
     
     # ^ Compose Method
     
@@ -130,7 +158,7 @@ class SeaPlayer(App[int]):
         # * Image Object Init
         
         self.player_selected_label = next(null_widget('<Label: DEV>'))#Label("<None>", classes="player-selected-label")
-        self.player_image = ImageWidget(IMG_NOT_FOUND)
+        self.player_image = ImageWidget(IMG_NOT_FOUND, resample=Image.Resampling.BILINEAR)
         
         # * Compositions Screen
         
@@ -180,25 +208,8 @@ class SeaPlayer(App[int]):
         yield Footer()
     
     async def on_ready(self) -> None:
-        await self.playlist_view.extend(
-            [
-                PlayListItem(
-                    None,
-                    'NBSPLV - Spectate',
-                    '44100 Hz, Stereo, 360 kbps, MP3'
-                ),
-                PlayListItem(
-                    None,
-                    'NBSPLV - Downpour',
-                    '48000 Hz, Stereo, 1260 kbps, FLAC'
-                ),
-                PlayListItem(
-                    None,
-                    'NBSPLV - Algorithm',
-                    '44100 Hz, Mono, 128 kbps, WAV'
-                )
-            ]
-        )
+        for input_handler_type in self.INPUT_HANDLERS_TYPES:
+            self.INPUT_HANDLERS.append(input_handler_type(self.playbacker))
     
     async def on_run(self) -> None:
         self.streamer = AsyncCallbackSoundDeviceStreamer()

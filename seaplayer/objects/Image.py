@@ -69,7 +69,7 @@ class ImageWidget(Label):
         else:
             if isinstance(self.__default, Image):
                 self.__content = await asyncio.to_thread(
-                    self.image2pixels, self.__default, size, self.__resample
+                    self.image2pixels, self.__default, size, Resampling.NEAREST
                 )
             else:
                 self.__content = self.__default

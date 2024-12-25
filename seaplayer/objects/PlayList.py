@@ -95,3 +95,8 @@ class PlayListView(ListView):
         if selected_child is None:
             return
         self.post_message(self.Selected(self, selected_child))
+    
+    async def create_item(self,
+        uuid: UUID, first: str='', second: str='', third: str=''
+    ) -> None:
+        await self.append(PlayListItem(uuid, first, second, third))

@@ -1,9 +1,14 @@
+import asyncio
 import itertools
 from typing_extensions import (
     Any,
-    Iterable,
-    Generator,
+    Iterable, Generator, AsyncGenerator,
+    TypeVar,
 )
+
+# ! Types
+
+T = TypeVar('T')
 
 # ! Itertools
 
