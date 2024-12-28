@@ -28,16 +28,16 @@ class PlaybackProgress(Static):
     def __init__(
         self,
         getfunc: Optional[GetCallback]=None,
-        fps: int=8
+        refresh_per_second: float=8.0
     ) -> None:
         super().__init__()
         self._bar = Progress(BarColumn(), TextColumn("{task.description}"))
         self._task_id = self._bar.add_task("", total=None)
-        self._fps = fps
+        self._refresh_per_second = refresh_per_second
         if getfunc is not None:
             self._getfunc: GetCallback = getfunc
         else:
-            self._getfunc: GetCallback = lambda: ("00:00 |   0%", None, None)
+            self._getfunc: GetCallback = lambda: ("00:00 / 00:00 |   0%", None, None)
         if inspect.iscoroutinefunction(self._getfunc):
             self.run_mode = 1
         elif inspect.isawaitable(self._getfunc):
@@ -48,7 +48,7 @@ class PlaybackProgress(Static):
             raise RuntimeError
     
     def on_mount(self) -> None:
-        self.update_render = self.set_interval(1 / self._fps, self.update_progress_bar)
+        self.update_render = self.set_interval(1.0 / self._refresh_per_second, self.update_progress_bar)
     
     async def upgrade_task(
         self,

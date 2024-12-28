@@ -1,46 +1,68 @@
 import yaml
+import json
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
     from yaml import Loader as Loader, Dumper as Dumper
 from pathlib import Path
+from pydantic import BaseModel, Field
 # > Typing
 from typing_extensions import (
-    Dict, Any,
-    Union, Literal,
-    Self,
-    _T as DT
+    Annotated
 )
+# > For Typing
+from PIL.Image import Resampling
 # > Local Imports
 from ._types import FilePathType
+from .objects.image import RenderMode
 
-# ! Variables
+# ! Validators & Serializers Methods
+
+# ! Types
+
+# ! Config Models
+
+class ConfigMainModel(BaseModel):
+    language: str = Field('en-eng', min_length=6, max_length=6)
+
+class ConfigImageModel(BaseModel):
+    resample: Resampling = Resampling.BILINEAR
+    render_mode: Resampling = RenderMode.HALF
+
+class ConfigSoundModel(BaseModel):
+    max_volume: float = Field(3.0)
+
+class ConfigModel(BaseModel):
+    main: ConfigMainModel = ConfigMainModel()
+    image: ConfigImageModel = ConfigImageModel()
+    sound: ConfigSoundModel = ConfigSoundModel()
+    
+    def __setstate__(self, state):
+        return super().__setstate__(state)
 
 # ! Main Config Class
 
 class Config:
-    __default_config_data__ = {
-        "main.language": "en-eng"
-    }
+    __default_config_data__ = ConfigModel()
     
     # ^ Methods
     
     @staticmethod
     def __dump(
         filepath: str,
-        data: Dict[str, Any]
+        data: ConfigModel
     ) -> None:
         with open(filepath, 'w', encoding='utf-8') as file:
-            yaml.dump(data, file, Dumper=Dumper, sort_keys=False)
+            yaml.dump(data.model_dump(mode='json', warnings=False), file, Dumper, sort_keys=False)
     
     @staticmethod
     def __load(
         filepath: str,
-        default: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        default: ConfigModel
+    ) -> ConfigModel:
         try:
             with open(filepath, 'r', encoding='utf-8') as file:
-                return yaml.load(file, Loader=Loader)
+                return ConfigModel.model_validate(yaml.load(file, Loader=Loader))
         except:
             Config.__dump(filepath, default)
             return default
@@ -53,38 +75,20 @@ class Config:
         self._filepath = Path(config_filepath).absolute()
         self._data = self.__load(self._filepath, self.__default_config_data__)
     
-    # ^ Dander Methods
-    
-    def __getitem__(self, key: str):
-        return self._data[key]
-    
-    def __setitem__(self, key: str, value: Any) -> None:
-        self._data[key] = value
-    
-    def __iadd__(self, other: 'Config') -> Self:
-        self._data.update(other._data)
-        return self
-    
-    # ^ Config Methods
-    
-    def get(self, key: str, default: Union[DT, Any]=None) -> Union[DT, Any]:
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
-    
-    def set(self, key: str, value: Any) -> None:
-        self.__setitem__(key, value)
-    
-    def merge(self, config: 'Config') -> None:
-        self._data.update(config._data)
+    def refresh(self) -> None:
+        self.__dump(self._filepath, self._data)
     
     # ^ Propertyes
     
     @property
-    def main_language(self) -> Union[str, Literal['en-eng']]:
-        return self.get("main.language", "en-eng")
+    def main(self) -> ConfigMainModel:
+        return self._data.main
+    
+    @property
+    def image(self) -> ConfigImageModel:
+        return self._data.image
 
 # ! Start
 if __name__ == "__main__":
     config = Config("./test-config.yaml")
+    config.refresh()

@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "SeaPlayer"
+version = "0.10.0.dev11"
+description = "SeaPlayer is a player that works in the terminal."
+authors = ["Romanin <60302782+romanin-rf@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.md"
+#homepage = "https://romanin-rf.github.io/SeaPlayer"
+repository = "https://github.com/romanin-rf/SeaPlayer"
+keywords = [
+    "textual", "tui",
+    "seaplayer", "player",
+    "audio", "wav", "mp3", "ogg", "flac"
+]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<4.0.0"
+textual = ">=1.0.0"
+rich = ">=13.3.3"
+rich-click = "^1.8.5"
+pillow = "^11.0.0"
+numpy = "^2.2.1"
+properties-py = "^1.2.1"
+pyyaml = "^6.0.2"
+platformdirs = "^4.3.6"
+typing-extensions = "^4.12.2"
+pydantic = "^2.10.4"
+seaplayer-audio = {git = "https://github.com/romanin-rf/seaplayer-audio", rev = "dev"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,5 +1,4 @@
 import os
-import time
 import datetime
 from numpy import ndarray
 from enum import Flag, auto
@@ -40,7 +39,7 @@ class PlaybackerState(Flag):
 
 # ! Messages
 
-class PlaybackerChangeState(Message):
+class PlaybackerChangeStateMessage(Message):
     def __init__(self) -> None:
         super().__init__()
 
@@ -84,7 +83,7 @@ class Playbacker:
     def __handler_audio__(self, data: ndarray):
         return data * self.volume
     
-    def __loop_frame__(self, frames: int) -> bool:
+    def __loop_frame__(self, frames: int) -> None:
         if (self.selected_track is not None) and (PlaybackerState.PLAYING in self.state) and (PlaybackerState.PAUSED not in self.state):
             data = self.selected_track.source.read(frames)
             if len(data) == 0:
@@ -133,24 +132,24 @@ class Playbacker:
     def play(self) -> None:
         if PlaybackerState.PLAYING not in self.state:
             self.state |= PlaybackerState.PLAYING
-            self.app.post_message(PlaybackerChangeState())
+            self.app.post_message(PlaybackerChangeStateMessage())
     
     def stop(self) -> None:
         if PlaybackerState.PLAYING in self.state:
             self.state = PlaybackerState(0)
             if self.selected_track is not None:
                 self.selected_track.set_position(0)
-            self.app.post_message(PlaybackerChangeState())
+            self.app.post_message(PlaybackerChangeStateMessage())
     
     def pause(self) -> None:
         if PlaybackerState.PAUSED not in self.state:
             self.state |= PlaybackerState.PAUSED
-            self.app.post_message(PlaybackerChangeState())
+            self.app.post_message(PlaybackerChangeStateMessage())
     
     def unpause(self) -> None:
         if PlaybackerState.PAUSED in self.state:
             self.state &= ~PlaybackerState.PAUSED
-            self.app.post_message(PlaybackerChangeState())
+            self.app.post_message(PlaybackerChangeStateMessage())
     
     # ^ Playlist Methods
     

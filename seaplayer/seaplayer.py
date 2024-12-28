@@ -1,12 +1,10 @@
 import os
 from uuid import UUID
+from importlib.metadata import version as pkgversion
 from textual import on
-from threading import Thread
 from textual.app import App, ComposeResult
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
-# > SeaPlayer (Audio)
-from seaplayer_audio import CallbackSoundDeviceStreamer
 # > Pillow
 from PIL import Image
 # > Typing
@@ -17,7 +15,7 @@ from typing_extensions import (
 # > Local Imports (Types)
 from ._types import PlaybackMode
 # > Local Imports (seaplayer)
-from .track import PlaybackerState, Playbacker, PlaybackerChangeState
+from .track import PlaybackerState, Playbacker, PlaybackerChangeStateMessage
 from .input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
 from .units import (
@@ -40,11 +38,10 @@ from .others.cache import Cacher
 # ! Template Variables
 
 def null_widget(text: str):
-    yield from []
     yield AnimatedGradientText( text )
 
 # ! SeaPlayer Main Application
-class SeaPlayer(App[int]):
+class SeaPlayer(App):
     # ^ Main Settings
     TITLE = f"{__title__} v{__version__}"
     ENABLE_COMMAND_PALETTE = False
@@ -62,14 +59,12 @@ class SeaPlayer(App[int]):
     
     config: Config = Config(CONFIG_FILEPATH)
     cacher: Cacher = Cacher(CACHE_DIRPATH)
-    ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH, config.main_language)
+    ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)
     
     # ^ Playback Variables
     
     playbacker: Playbacker
     playback_mode = cacher.var('playback_mode', PlaybackMode.PLAY)
-    
-    # ^ Dunder Methods
     
     # ^ Spetific Methods
     
@@ -77,12 +72,16 @@ class SeaPlayer(App[int]):
         return self.ll.get(f"player.button.mode.{self.playback_mode.name.lower()}")
     
     async def get_playback_statuses_text(self) -> str:
-        # TODO: Написать получение данных о текущем статусе воспроизведения
         if self.playbacker.selected_track is not None:
             position = self.playbacker.selected_track.get_position()
-            text = f"{round(position//60):0>2}:{round(position%60):0>2} | {round(self.playbacker.volume*100):>3}%"
+            duration = self.playbacker.selected_track.duration
+            cm, cs, vol, tm, ts = \
+                round(position // 60), round(position % 60), \
+                round(self.playbacker.volume * 100), \
+                round(duration // 60), round(duration % 60)
+            text = f"{cm:0>2}:{cs:0>2} / {tm:0>2}:{ts:0>2} | {vol:>3}%"
             return text, position, self.playbacker.selected_track.duration
-        return f"00:00 | {round(self.playbacker.volume*100):>3}%", None, None
+        return f"00:00 / 00:00 | {round(self.playbacker.volume*100):>3}%", None, None
     
     def refresh_selected_label(self):
         if self.playbacker.selected_track is not None:
@@ -136,8 +135,7 @@ class SeaPlayer(App[int]):
     
     @on(Button.Pressed, "#button-pause")
     async def pause_playback(self, event: Button.Pressed) -> None:
-        # TODO: Написать метод паузы воспроизведения
-        if self.playbacker.selected_track is None:
+        if (self.playbacker.selected_track is None) and (PlaybackerState.PLAYING not in self.playbacker.state):
             return
         if PlaybackerState.PAUSED in self.playbacker.state:
             self.playbacker.unpause()
@@ -146,7 +144,6 @@ class SeaPlayer(App[int]):
     
     @on(Button.Pressed, "#button-play-stop")
     async def play_or_stop_playback(self, event: Button.Pressed) -> None:
-        # TODO: Написать метод воспроизведения или остановки воспроизведения
         if self.playbacker.selected_track is None:
             return
         if PlaybackerState.PLAYING in self.playbacker.state:
@@ -177,8 +174,8 @@ class SeaPlayer(App[int]):
             thread=True,
         )
     
-    @on(PlaybackerChangeState)
-    def sound_change_state(self, event: PlaybackerChangeState) -> None:
+    @on(PlaybackerChangeStateMessage)
+    def sound_change_state(self, event: PlaybackerChangeStateMessage) -> None:
         self.refresh_selected_label()
     
     # ^ Compose Method
@@ -213,7 +210,7 @@ class SeaPlayer(App[int]):
         
         # * Compose
         
-        yield Header()
+        yield Header(icon='🌊')
         with self.player_box:
             with Vertical():
                 with Container(classes="player-visual-panel"):

@@ -1,14 +1,22 @@
 import asyncio
+from enum import Enum
 from PIL.Image import Image, Resampling
 from textual.widgets import Label
 from rich.console import RenderableType
 # > Local Imports
-from ..others.ripix import RichPixels
+from ..others.ripix import RichPixels, HalfcellRenderer, FullcellRenderer
 # > Typing
 from typing_extensions import (
     Tuple,
     Union, Optional,
 )
+
+# ! Types
+
+class RenderMode(Enum):
+    NONE = 0
+    HALF = 1
+    FULL = 2
 
 # ! Main Class
 class ImageWidget(Label):
@@ -23,29 +31,48 @@ class ImageWidget(Label):
     
     @staticmethod
     def image2pixels(
-        __image: Image,
-        __resize: Optional[Tuple[int, int]]=None,
-        __resample: Optional[Resampling]=None
+        image: Image,
+        resize: Optional[Tuple[int, int]]=None,
+        resample: Optional[Resampling]=None,
+        render_mode: Optional[RenderMode]=None
     ) -> RichPixels:
-        return RichPixels.from_image(__image, __resize, __resample)
+        render_mode = render_mode or RenderMode.NONE
+        match render_mode:
+            case RenderMode.NONE:
+                return RichPixels.from_image(image, resize, resample)
+            case RenderMode.HALF:
+                return RichPixels.from_segments(HalfcellRenderer().render(image, resize, resample))
+            case RenderMode.FULL:
+                return RichPixels.from_segments(FullcellRenderer().render(image, resize, resample))
+        raise ValueError(f'{render_mode=!r}')
     
     def __init__(
         self,
         default: Optional[Union[Image, RenderableType]]=None,
         image: Optional[Image]=None,
-        resample: Optional[Resampling]=None
+        resample: Optional[Resampling]=None,
+        render_mode: Optional[RenderMode]=None
     ) -> None:
         self.__default = default or "<image not found>"
         self.__image = image
         self.__resample = resample or Resampling.NEAREST
+        self.__render_mode = render_mode or RenderMode.HALF
         self.__last_image_size = None
         if image is None:
             if isinstance(self.__default, Image):
-                self.__content = self.image2pixels(self.__default)
+                self.__content = self.image2pixels(
+                    self.__default, 
+                    resample=Resampling.NEAREST, 
+                    render_mode=self.__render_mode
+                )
             else:
                 self.__content = self.__default
         else:
-            self.__content = self.image2pixels(self.__image)
+            self.__content = self.image2pixels(
+                self.__image,
+                resample=self.__resample,
+                render_mode=self.__render_mode
+            )
         super().__init__(self.__content)
     
     async def on_resize(self):

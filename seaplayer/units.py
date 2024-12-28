@@ -6,7 +6,7 @@ from PIL import Image
 
 # ! Metadata
 __title__ = "SeaPlayer"
-__version__ = "0.10.0.dev10"
+__version__ = "0.10.0.dev11"
 __author__ = "Romanin"
 __email__ = "semina054@gmail.com"
 __url__ = "https://github.com/romanin-rf/SeaPlayer"
