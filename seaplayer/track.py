@@ -1,9 +1,12 @@
 import os
-import asyncio
+import time
+import datetime
 from numpy import ndarray
 from enum import Flag, auto
 from uuid import uuid4, UUID
 from textual.app import App
+from textual.message import Message
+from seaplayer_audio import CallbackSoundDeviceStreamer
 # > Typing
 from typing_extensions import Dict, Optional
 # > Local Imports
@@ -24,11 +27,22 @@ CHANNELS_NAMES = {
     12: 'Voluminous (10.2/11.1)',
 }
 
+def formtime() -> str:
+    return '{0.day:0>2}.{0.month:0>2}.{0.year:0>4} {0.hour:0>2}:{0.minute:0>2}:{0.second:0>2}.{0.microsecond}'.format(
+        datetime.datetime.now()
+    )
+
 # ! Track Controller State
 
 class PlaybackerState(Flag):
     PLAYING = auto()
     PAUSED = auto()
+
+# ! Messages
+
+class PlaybackerChangeState(Message):
+    def __init__(self) -> None:
+        super().__init__()
 
 # ! Playbacker Class
 
@@ -36,14 +50,13 @@ class Playbacker:
     def __init__(
         self,
         app: App,
-        streamer: SupportAudioStreamer,
         *,
         volume: Optional[float]=None,
         piece_size: Optional[float]=None,
         tracks: Optional[Dict[UUID, 'Track']]=None,
     ) -> None:
         self.app: App = app
-        self.streamer: SupportAudioStreamer = streamer
+        self.streamer: SupportAudioStreamer = CallbackSoundDeviceStreamer(precallback=self.__loop_frame__)
         self.tracks: Dict[UUID, 'Track'] = tracks or {}
         self.selected_track: Optional[Track] = None
         self.selected_track_uuid: Optional[UUID] = None
@@ -62,90 +75,82 @@ class Playbacker:
     def running(self) -> bool:
         return self.__running
     
-    # ^ Playback Loop Methods
-    
-    async def __loop_pause__(self) -> None:
-        while self.__running and (PlaybackerState.PAUSED in self.state) and (PlaybackerState.PLAYING in self.state):
-            await asyncio.sleep(0.01)
+    @running.setter
+    def running(self, value: bool) -> None:
+        self.__running = value
     
     # ^ Playback Spetific Methods
     
     def __handler_audio__(self, data: ndarray):
         return data * self.volume
     
-    async def __loop__(self) -> None:
-        self.__running = True
-        while self.__running:
-            if self.selected_track is not None:
-                if PlaybackerState.PAUSED in self.state:
-                    self.app.call_from_thread(self.__loop_pause__)
-                if PlaybackerState.PLAYING in self.state:
-                    if not self.streamer.is_busy():
-                        data = self.app.call_from_thread(self.selected_track.source.readline, self.piece_size)
-                        if len(data) == 0:
-                            self.app.call_from_thread(self.stop)
-                            # TODO: Создать event для указания об окончании трека
-                            continue
-                        handlered_data = self.__handler_audio__(data)
-                        self.streamer.send(handlered_data)
-            await asyncio.sleep(0.01)
+    def __loop_frame__(self, frames: int) -> bool:
+        if (self.selected_track is not None) and (PlaybackerState.PLAYING in self.state) and (PlaybackerState.PAUSED not in self.state):
+            data = self.selected_track.source.read(frames)
+            if len(data) == 0:
+                self.stop()
+                return
+            self.streamer.send(self.__handler_audio__(data))
+    
+    # ^ Playbacker Methods
+    
+    def start(self) -> None:
+        if not self.__running:
+            self.running = True
+            self.streamer.start()
+    
+    def terminate(self) -> None:
+        if self.__running:
+            self.running = False
+            self.streamer.stop()
     
     # ^ Playback Main Methods
     
-    async def select_by_uuid(self, __uuid: UUID) -> None:
+    def select_by_uuid(self, __uuid: UUID) -> None:
         track = self.tracks.get(__uuid, None)
         if track is not None:
             if track.uuid != self.selected_track_uuid:
-                await self.stop()
+                self.stop()
                 self.selected_track = track
                 self.selected_track_uuid = __uuid
     
-    async def select_by_track(self, __track: 'Track') -> None:
+    def select_by_track(self, __track: 'Track') -> None:
         if __track.uuid in self.tracks.keys():
             if __track.uuid != self.selected_track_uuid:
-                await self.stop()
+                self.stop()
                 self.selected_track = __track
                 self.selected_track_uuid = __track.uuid
     
-    async def select_next(self) -> UUID:
+    def select_next(self) -> UUID:
         tracks_uuids = list(self.tracks.keys())
         if len(tracks_uuids) > 0:
             selected_track_index = tracks_uuids.index(self.selected_track_uuid)
             if (selected_track_index + 1) < len(tracks_uuids):
-                await self.select_by_uuid(tracks_uuids[selected_track_index + 1])
+                self.select_by_uuid(tracks_uuids[selected_track_index + 1])
             else:
-                await self.select_by_uuid(tracks_uuids[0])
+                self.select_by_uuid(tracks_uuids[0])
     
-    async def play(self) -> None:
+    def play(self) -> None:
         if PlaybackerState.PLAYING not in self.state:
             self.state |= PlaybackerState.PLAYING
-            # TODO: Нужно как-то сделать вызов события начала воспроизведения
+            self.app.post_message(PlaybackerChangeState())
     
-    async def stop(self) -> None:
+    def stop(self) -> None:
         if PlaybackerState.PLAYING in self.state:
             self.state = PlaybackerState(0)
-            self.streamer.abort()
             if self.selected_track is not None:
-                await self.selected_track.set_position(0)
-            # TODO: Нужно как-то сделать вызов события остановки воспроизведения
+                self.selected_track.set_position(0)
+            self.app.post_message(PlaybackerChangeState())
     
-    async def pause(self) -> None:
+    def pause(self) -> None:
         if PlaybackerState.PAUSED not in self.state:
             self.state |= PlaybackerState.PAUSED
-            # TODO: Нужно как-то сделать вызов события паузы
+            self.app.post_message(PlaybackerChangeState())
     
-    async def unpause(self) -> None:
+    def unpause(self) -> None:
         if PlaybackerState.PAUSED in self.state:
             self.state &= ~PlaybackerState.PAUSED
-            # TODO: Нужно как-то сделать вызов события снятия с паузы
-    
-    #async def exists_track_by_filepath(self, __filepath: FilePathType) -> bool:
-    #    if self._is_filepath(__filepath):
-    #        filepath = Path(__filepath).resolve()
-    #        for track in self.tracks.values():
-    #            if filepath.samefile(track.source.name):
-    #                return True
-    #    return False
+            self.app.post_message(PlaybackerChangeState())
     
     # ^ Playlist Methods
     
@@ -244,36 +249,36 @@ class Track:
     
     # ^ Track Methods
     
-    async def get_position(self) -> float:
-        return (await self.source.tell()) / self.source.samplerate
+    def get_position(self) -> float:
+        return (self.source.tell()) / self.source.samplerate
     
-    async def set_position(self, __position: float) -> None:
+    def set_position(self, __position: float) -> None:
         new_position = round(__position * self.source.samplerate)
-        await self.source.seek(new_position)
+        self.source.seek(new_position)
     
-    async def play(self) -> None:
+    def play(self) -> None:
         if self.playbacker.selected_track_uuid == self.uuid:
-            await self.playbacker.play()
+            self.playbacker.play()
     
-    async def stop(self) -> None:
+    def stop(self) -> None:
         if self.playbacker.selected_track_uuid == self.uuid:
-            await self.playbacker.stop()
+            self.playbacker.stop()
     
-    async def pause(self) -> None:
+    def pause(self) -> None:
         if self.playbacker.selected_track_uuid == self.uuid:
-            await self.playbacker.pause()
+            self.playbacker.pause()
     
-    async def unpause(self) -> None:
+    def unpause(self) -> None:
         if self.playbacker.selected_track_uuid == self.uuid:
-            await self.playbacker.unpause()
+            self.playbacker.unpause()
     
-    async def get_volume(self) -> float:
+    def get_volume(self) -> float:
         return self.playbacker.volume
     
-    async def set_volume(self, __volume: float) -> None:
+    def set_volume(self, __volume: float) -> None:
         if self.playbacker.selected_track_uuid == self.uuid:
             if __volume >= 0:
                 self.playbacker.volume = float(__volume)
     
-    async def select(self) -> None:
-        await self.playbacker.select_by_track(self)
+    def select(self) -> None:
+        self.playbacker.select_by_track(self)

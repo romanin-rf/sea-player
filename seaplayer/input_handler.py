@@ -2,7 +2,7 @@ import os
 import glob
 from uuid import UUID
 from abc import ABC, abstractmethod
-from seaplayer_audio import AsyncFileAudioSource
+from seaplayer_audio import FileAudioSource
 # > Typing
 from typing_extensions import (
     Any,
@@ -43,7 +43,7 @@ class FileGlobInputHandler(InputHandlerBase):
         for filepath in glob.glob(input, recursive=True):
             if not self.__exist_track_by_filepath(filepath):
                 try:
-                    source = AsyncFileAudioSource(filepath, **kwargs)
+                    source = FileAudioSource(filepath, **kwargs)
                     yield Track(source, self.playbacker).uuid
                 except:
                     pass
