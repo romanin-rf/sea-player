@@ -2,7 +2,7 @@ import os
 from uuid import UUID
 from textual import on
 from textual.app import App, ComposeResult
-from textual.binding import Binding, BindingsMap
+from textual.binding import Binding#, BindingsMap
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
 # > Pillow
@@ -19,8 +19,9 @@ from .track import PlaybackerState, Playbacker, PlaybackerChangeStateMessage
 from .input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
 from .units import (
+    ll, config, cacher,
     __title__, __version__,
-    CSS_LOCALDIR, LANGUAGES_DIRPATH, CACHE_DIRPATH, CONFIG_FILEPATH,
+    CSS_LOCALDIR,
     IMG_NOT_FOUND
 )
 # > Local Imports (Main)
@@ -31,8 +32,6 @@ from .objects.progressbar import PlaybackProgress
 from .objects.image import ImageWidget
 from .objects.playlist import PlayListView, PlayListItem
 from .objects.separator import HorizontalSeporator
-# > Local Imports (Spetific)
-from .others.cache import Cacher
 
 # ! Template Variables
 
@@ -48,26 +47,27 @@ def generate_bindings(config: Config, ll: LanguageLoader):
         ll.get("footer.volume.minus") \
             .format(per=round(config.sound.volume_per*100))
     )
+    yield Binding(
+        config.key.rewind_backward, "rewind_backward",
+        ll.get("footer.rewind.minus") \
+            .format(sec=config.sound.rewind_per)
+    )
+    yield Binding(
+        config.key.rewind_forward, "rewind_forward",
+        ll.get("footer.rewind.plus") \
+            .format(sec=config.sound.rewind_per)
+    )
+    yield Binding('1', "push_screen('show-config')", 'Show Config')
 
 # ! SeaPlayer Main Application
 class SeaPlayer(App):
     # ^ Main Settings
     TITLE = f"{__title__} v{__version__}"
-    ENABLE_COMMAND_PALETTE = False
     CSS_PATH = [
         os.path.join(CSS_LOCALDIR, "seaplayer.tcss"),
-        #os.path.join(CSS_LOCALDIR, "configurate.tcss"),
     ]
-    
-    # ^ Runtime Variables
-    
-    config: Config = Config(CONFIG_FILEPATH)
-    cacher: Cacher = Cacher(CACHE_DIRPATH)
-    ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)
-    
-    # ^ Runtime Settings
-    
     BINDINGS = list(generate_bindings(config, ll))
+    ENABLE_COMMAND_PALETTE = False
     
     # ^ Runtime Constants
     
@@ -82,7 +82,7 @@ class SeaPlayer(App):
     # ^ Spetific Methods
     
     def get_playback_mode_text(self) -> str:
-        return self.ll.get(f"player.button.mode.{self.playback_mode.name.lower()}")
+        return ll.get(f"player.button.mode.{self.playback_mode.name.lower()}")
     
     async def get_playback_statuses_text(self) -> str:
         if self.playbacker.selected_track is not None:
@@ -109,7 +109,7 @@ class SeaPlayer(App):
             key = 'sound.status.none'
         self.player_selected_label.update(
             '<{0}> {1}'.format(
-                self.ll.get(key),
+                ll.get(key),
                 self.playbacker.selected_track.__playback_name__()
             )
         )
@@ -131,6 +131,8 @@ class SeaPlayer(App):
         self.playbacker.stop()
         self.playbacker.select_by_uuid(uuid)
         if self.playbacker.selected_track is not None:
+            if self.playbacker.streamer.samplerate != self.playbacker.selected_track.source.samplerate:
+                self.playbacker.reconfigurate(self.playbacker.selected_track.source.samplerate)
             self.call_from_thread(self.player_image.update_image, self.playbacker.selected_track.cover)
         self.call_from_thread(self.refresh_selected_label)
     
@@ -197,22 +199,22 @@ class SeaPlayer(App):
         # * Play Screen
         
         self.player_box = Container(classes="player-box")
-        self.player_box.border_title = self.ll.get("player")
+        self.player_box.border_title = ll.get("player")
         
         # * Image Object Init
         
-        self.player_selected_label = Label('<{0}>'.format(self.ll.get('sound.status.none')), classes="player-selected-label")
+        self.player_selected_label = Label('<{0}>'.format(ll.get('sound.status.none')), classes="player-selected-label")
         self.player_image = ImageWidget(IMG_NOT_FOUND, resample=Image.Resampling.BILINEAR)
         
         # * Compositions Screen
         
         self.playlist_box = Container(classes="playlist-box")
-        self.playlist_box.border_title = self.ll.get("playlist")
+        self.playlist_box.border_title = ll.get("playlist")
         self.playlist_view = PlayListView(classes="playlist-container")
         
         self.playlist_sound_input = Input(
             classes="playlist-sound-input", id="soundinput",
-            placeholder=self.ll.get("playlist.input.placeholder")
+            placeholder=ll.get("playlist.input.placeholder")
         )
         self.player_playback_switch_button = Button(
             self.get_playback_mode_text(),
@@ -233,13 +235,13 @@ class SeaPlayer(App):
                     yield PlaybackProgress(getfunc=self.get_playback_statuses_text)
                     with Horizontal(classes="box-buttons-sound-control"):
                         yield Button(
-                            self.ll.get("player.button.pause"),
+                            ll.get("player.button.pause"),
                             id="button-pause",
                             variant="success",
                             classes="button-sound-control"
                         )
                         yield Button(
-                            self.ll.get("player.button.psu"),
+                            ll.get("player.button.psu"),
                             id="button-play-stop",
                             variant="warning",
                             classes="button-sound-control"
@@ -254,23 +256,27 @@ class SeaPlayer(App):
     # ^ SeaPlayer Textual Actions
     
     async def action_rewind_forward(self) -> None:
-        pass
+        if self.playbacker.selected_track is not None:
+            pass
     
     async def action_rewind_backward(self) -> None:
-        pass
+        if self.playbacker.selected_track is not None:
+            pass
     
     async def action_volume_add(self) -> None:
-        if self.config.sound.max_volume >= (self.playbacker.volume + self.config.sound.volume_per):
-            self.playbacker.volume += self.config.sound.volume_per
+        new_volume = round(self.playbacker.volume + config.sound.volume_per, 2)
+        if config.sound.max_volume >= new_volume:
+            self.playbacker.volume = new_volume
     
     async def action_volume_drop(self) -> None:
-        if (self.playbacker.volume - self.config.sound.volume_per) >= 0.0:
-            self.playbacker.volume -= self.config.sound.volume_per
+        new_volume = round(self.playbacker.volume - config.sound.volume_per, 2)
+        if new_volume >= 0.0:
+            self.playbacker.volume = new_volume
     
     # ^ Textaul Actions
     
     async def on_ready(self) -> None:
-        self.playbacker = Playbacker(self, volume=1.0)
+        self.playbacker = Playbacker(self)
         for input_handler_type in self.INPUT_HANDLERS_TYPES:
             self.INPUT_HANDLERS.append(input_handler_type(self.playbacker))
         self.playbacker.start()

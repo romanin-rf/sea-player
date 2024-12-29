@@ -4,12 +4,14 @@ from platformdirs import user_config_dir
 # > Pillow
 from PIL import Image
 # > Local Imports
-from .others.cache import Cacher
+from .config import Config
 from .languages import LanguageLoader
+from .others.cache import Cacher
+
 
 # ! Metadata
 __title__ = "SeaPlayer"
-__version__ = "0.10.0.dev12"
+__version__ = "0.10.0.dev14"
 __author__ = "Romanin"
 __email__ = "semina054@gmail.com"
 __url__ = "https://github.com/romanin-rf/SeaPlayer"
@@ -51,5 +53,6 @@ IMG_NOT_FOUND = Image.open(IMGPATH_IMAGE_NOT_FOUND)
 
 # ! Variables
 
+config: Config = Config(CONFIG_FILEPATH)
 cacher: Cacher = Cacher(CACHE_DIRPATH)
-ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH)
+ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)

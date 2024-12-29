@@ -1,8 +1,8 @@
 import yaml
 try:
-    from yaml import CLoader as Loader, CDumper as Dumper
+    from yaml import CSafeLoader as Loader, CSafeDumper as Dumper
 except ImportError:
-    from yaml import Loader as Loader, Dumper as Dumper
+    from yaml import SafeLoader as Loader, SafeDumper as Dumper
 from pathlib import Path
 from pydantic import BaseModel, Field
 # > Typing
@@ -14,10 +14,6 @@ from PIL.Image import Resampling
 # > Local Imports
 from ._types import FilePathType
 from .objects.image import RenderMode
-
-# ! Validators & Serializers Methods
-
-# ! Types
 
 # ! Config Models
 
@@ -46,9 +42,6 @@ class ConfigModel(BaseModel):
     image: ConfigImageModel = ConfigImageModel()
     sound: ConfigSoundModel = ConfigSoundModel()
     key: ConfigKeyModel = ConfigKeyModel()
-    
-    def __setstate__(self, state):
-        return super().__setstate__(state)
 
 # ! Main Config Class
 

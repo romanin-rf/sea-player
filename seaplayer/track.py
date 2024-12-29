@@ -6,12 +6,12 @@ from uuid import uuid4, UUID
 from textual.app import App
 from textual.message import Message
 from seaplayer_audio import CallbackSoundDeviceStreamer
+from seaplayer_audio._types import AudioSamplerate, AudioChannels
 # > Typing
 from typing_extensions import Dict, Optional
 # > Local Imports
-from .others.cache import Cacher
 from ._types import SupportAudioSource, SupportAudioStreamer
-
+from .units import cacher
 
 # ! Constants
 
@@ -45,6 +45,10 @@ class PlaybackerChangeStateMessage(Message):
     def __init__(self) -> None:
         super().__init__()
 
+class PlaybackerTrackEndMessage(Message):
+    def __init__(self) -> None:
+        super().__init__()
+
 # ! Playbacker Class
 
 class Playbacker:
@@ -52,18 +56,19 @@ class Playbacker:
         self,
         app: App,
         *,
-        volume: Optional[float]=None,
         tracks: Optional[Dict[UUID, 'Track']]=None,
     ) -> None:
         self.app: App = app
-        self.cacher: Cacher = self.app.cacher
         self.streamer: SupportAudioStreamer = CallbackSoundDeviceStreamer(precallback=self.__loop_frame__)
         self.tracks: Dict[UUID, 'Track'] = tracks or {}
         self.selected_track: Optional[Track] = None
         self.selected_track_uuid: Optional[UUID] = None
         self.state: PlaybackerState = PlaybackerState(0)
-        self.volume: float = volume or 1.0
         self.__running = False
+    
+    # ^ Variables
+    
+    volume: float = cacher.var('volume', 1.0)
     
     # ^ Propertyes
     
@@ -89,6 +94,7 @@ class Playbacker:
             data = self.selected_track.source.read(frames)
             if len(data) == 0:
                 self.stop()
+                self.app.post_message(PlaybackerTrackEndMessage())
                 return
             self.streamer.send(self.__handler_audio__(data))
     
@@ -103,6 +109,18 @@ class Playbacker:
         if self.__running:
             self.running = False
             self.streamer.stop()
+    
+    def reconfigurate(self,
+        samlerate: AudioSamplerate=44100,
+        channels: AudioChannels=2,
+        *,
+        start: bool=True
+    ) -> None:
+        if self.__running:
+            self.terminate()
+        self.streamer.reconfigure(samlerate, channels)
+        if start:
+            self.start()
     
     # ^ Playback Main Methods
     

@@ -2,7 +2,6 @@ from typing_extensions import (
     Any,
     Iterable,
     Generator,
-    Optional,
 )
 
 # ! Error Base Class
