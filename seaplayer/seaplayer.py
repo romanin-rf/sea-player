@@ -2,7 +2,7 @@ import os
 from uuid import UUID
 from textual import on
 from textual.app import App, ComposeResult
-from textual.binding import Binding#, BindingsMap
+from textual.binding import Binding
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
 # > Pillow
@@ -57,7 +57,6 @@ def generate_bindings(config: Config, ll: LanguageLoader):
         ll.get("footer.rewind.plus") \
             .format(sec=config.sound.rewind_per)
     )
-    yield Binding('1', "push_screen('show-config')", 'Show Config')
 
 # ! SeaPlayer Main Application
 class SeaPlayer(App):
@@ -257,11 +256,15 @@ class SeaPlayer(App):
     
     async def action_rewind_forward(self) -> None:
         if self.playbacker.selected_track is not None:
-            pass
+            new_position = self.playbacker.selected_track.get_position() + config.sound.rewind_per
+            if self.playbacker.selected_track.duration >= new_position:
+                self.playbacker.selected_track.set_position(new_position)
     
     async def action_rewind_backward(self) -> None:
         if self.playbacker.selected_track is not None:
-            pass
+            new_position = self.playbacker.selected_track.get_position() - config.sound.rewind_per
+            if 0.0 >= self.playbacker.selected_track.duration:
+                self.playbacker.selected_track.set_position(new_position)
     
     async def action_volume_add(self) -> None:
         new_volume = round(self.playbacker.volume + config.sound.volume_per, 2)
@@ -275,8 +278,10 @@ class SeaPlayer(App):
     
     # ^ Textaul Actions
     
-    async def on_ready(self) -> None:
+    async def on_run(self) -> None:
         self.playbacker = Playbacker(self)
+    
+    async def on_ready(self) -> None:
         for input_handler_type in self.INPUT_HANDLERS_TYPES:
             self.INPUT_HANDLERS.append(input_handler_type(self.playbacker))
         self.playbacker.start()
@@ -284,3 +289,9 @@ class SeaPlayer(App):
     async def action_quit(self):
         self.playbacker.terminate()
         return await super().action_quit()
+    
+    # ^ App Methods
+    
+    async def run_async(self, *args, **kwargs):
+        await self.on_run()
+        return super().run_async(*args, **kwargs)

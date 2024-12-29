@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SeaPlayer"
-version = "0.10.0.dev14"
+version = "0.10.0.dev15"
 description = "SeaPlayer is a player that works in the terminal."
 authors = ["Romanin <60302782+romanin-rf@users.noreply.github.com>"]
 license = "MIT"
@@ -34,7 +34,6 @@ typing-extensions = "^4.12.2"
 pydantic = "^2.10.4"
 seaplayer-audio = {git = "https://github.com/romanin-rf/seaplayer-audio", rev = "dev"}
 
-
 [tool.poetry.group.dev.dependencies]
 pyinstaller-builder = {git = "https://git.smokeofanarchy.ru/Romanin/pyinstaller-builder.git"}
 rich = "^13.9.4"
@@ -47,6 +46,9 @@ mkdocstrings = {extras = ["crystal", "python"], version = "^0.27.0"}
 mkdocstrings-python = ">=0.18"
 mkdocs-material = "^9.5.49"
 mkdocs-material-extensions = "^1.3.1"
+
+[tool.poetry.scripts]
+seaplayer = 'seaplayer.main:main'
 
 [build-system]
 requires = ["poetry-core"]

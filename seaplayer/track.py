@@ -6,7 +6,7 @@ from uuid import uuid4, UUID
 from textual.app import App
 from textual.message import Message
 from seaplayer_audio import CallbackSoundDeviceStreamer
-from seaplayer_audio._types import AudioSamplerate, AudioChannels
+from seaplayer_audio._types import AudioSamplerate, AudioChannels, AudioDType
 # > Typing
 from typing_extensions import Dict, Optional
 # > Local Imports
@@ -111,14 +111,15 @@ class Playbacker:
             self.streamer.stop()
     
     def reconfigurate(self,
-        samlerate: AudioSamplerate=44100,
-        channels: AudioChannels=2,
+        samlerate: Optional[AudioSamplerate]=None,
+        channels: Optional[AudioChannels]=None,
+        dtype: Optional[AudioDType]=None,
         *,
         start: bool=True
     ) -> None:
         if self.__running:
             self.terminate()
-        self.streamer.reconfigure(samlerate, channels)
+        self.streamer.reconfigure(samlerate, channels, dtype)
         if start:
             self.start()
     
