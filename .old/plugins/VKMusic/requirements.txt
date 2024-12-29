@@ -1,2 +1,0 @@
-vkpymusic==3.0.1
-vbml>=1.1

@@ -24,7 +24,7 @@ Supports the following languages: `English`, `Русский`, `Українсь
 ```sh
 pip install -U seaplayer
 ```
-
+<!--
 ### Playing for MIDI 
 In order to play MIDI files you need to install [FluidSynth](https://www.fluidsynth.org).
 
@@ -54,3 +54,4 @@ In order to play MIDI files you need to install [FluidSynth](https://www.fluidsy
         ```shell
         sudo port install fluidsynth
         ```
+-->

@@ -1,3 +1,0 @@
-asyncio
-nest-asyncio
-pypresence

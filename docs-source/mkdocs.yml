@@ -1,23 +1,22 @@
 site_name: SeaPlayer
 repo_url: https://github.com/romanin-rf/SeaPlayer
 nav:
-  - Home:
-    - index.md
-    - Welcome to SeaPlayer: index.md
-    - Plugin CLI: plugin-cli-home.md
-    - Plugin Development: plugin-dev-home.md
-  - API:
-    - api/index.md
-    - Welcome to SeaPlayer API: api/index.md
-    - SeaPlayer: api/seaplayer.md
-    - PluginLoader: api/pluginloader.md
-    - PluginBase: api/pluginbase.md
-    - Languages: api/languages.md
-    - Config: api/config.md
-    - Codecbase: api/codecbase.md
-    - Types: api/types.md
-    - Exceptions: api/exceptions.md
+  - Home: index.md
   - Сhangelog: changelog.md
+#    - Welcome to SeaPlayer: index.md
+#    - Plugin CLI: plugin-cli-home.md
+#    - Plugin Development: plugin-dev-home.md
+#  - API:
+#    - api/index.md
+#    - Welcome to SeaPlayer API: api/index.md
+#    - SeaPlayer: api/seaplayer.md
+#    - PluginLoader: api/pluginloader.md
+#    - PluginBase: api/pluginbase.md
+#    - Languages: api/languages.md
+#    - Config: api/config.md
+#    - Codecbase: api/codecbase.md
+#    - Types: api/types.md
+#    - Exceptions: api/exceptions.md
 theme:
   name: material
   logo: assets/logo.png

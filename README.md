@@ -6,13 +6,13 @@
 ## Descriptions
 SeaPlayer is a player that works in the terminal.
 
-Supports the following audio file formats: `MP3`, `OGG`, `WAV`, `FLAC`, `MIDI`.
+Supports the following audio file formats: `MP3`, `OGG`, `WAV`, `FLAC` and more...
 
 Supports the following languages: `English`, `Русский`, `Українська`.
 
 ## Screenshots
-![Main Screen](https://github.com/romanin-rf/SeaPlayer/assets/60302782/84e1f498-beab-463b-ba2a-a8a109e607c0)
-![Configurate Screen](https://github.com/romanin-rf/SeaPlayer/assets/60302782/c8f0fa20-b4b8-4858-ac4a-bb8ddb8c0a39)
+<!-- ![Main Screen](https://github.com/romanin-rf/SeaPlayer/assets/60302782/84e1f498-beab-463b-ba2a-a8a109e607c0) -->
+<!-- ![Configurate Screen](https://github.com/romanin-rf/SeaPlayer/assets/60302782/c8f0fa20-b4b8-4858-ac4a-bb8ddb8c0a39) -->
 
 ## Using
 ```shell
@@ -23,9 +23,10 @@ python -m seaplayer # Method for `downloaded repository` or `installed via pip`
 1. You can use [Release](https://github.com/romanin-rf/sea-player/releases)
 2. ***Download clone repository*** install the dependencies from `requirements.txt` and run via [Python](https://www.python.org).
 3.  ```
-    pip install --upgrade seaplayer
+    pip install -U seaplayer
     ```
 
+<!--
 ### For MIDI playback
 In order to play MIDI files you need to install FluidSynth:
 - **Windows**: https://github.com/FluidSynth/fluidsynth/releases
@@ -55,3 +56,4 @@ In order to play MIDI files you need to install FluidSynth:
         ```shell
         sudo port install fluidsynth
         ```
+-->

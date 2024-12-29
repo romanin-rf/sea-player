@@ -1,8 +1,0 @@
-{
-    "name": "VK Music",
-    "name_id": "seaplayer.plugins.vk.music",
-    "version": "0.5.1",
-    "author": "Romanin",
-    "description": "Music downloader from VK.",
-    "url": "https://github.com/romanin-rf/SeaPlayer"
-}

@@ -3,6 +3,9 @@ import sys
 from platformdirs import user_config_dir
 # > Pillow
 from PIL import Image
+# > Local Imports
+from .others.cache import Cacher
+from .languages import LanguageLoader
 
 # ! Metadata
 __title__ = "SeaPlayer"
@@ -17,10 +20,10 @@ __url__ = "https://github.com/romanin-rf/SeaPlayer"
 # ! Initialization
 IM_BINARY = (bool(getattr(sys, 'frozen', False)) and hasattr(sys, '_MEIPASS'))
 if IM_BINARY:
-    LOCALDIR = os.path.dirname(sys.executable)
+    LOCAL_DIRPATH = os.path.dirname(sys.executable)
     #ENABLE_PLUGIN_SYSTEM = False
 else:
-    LOCALDIR = os.path.dirname(os.path.dirname(__file__))
+    LOCAL_DIRPATH = os.path.dirname(os.path.dirname(__file__))
     #ENABLE_PLUGIN_SYSTEM = True
 
 # ! SeaPlayer Paths
@@ -29,7 +32,7 @@ ASSETS_DIRPATH = os.path.join(os.path.dirname(__file__), "assets")
 CONFIG_DIRPATH = user_config_dir(__title__, False, ensure_exists=True)
 CONFIG_FILEPATH = os.path.join(CONFIG_DIRPATH, "config.yaml")
 CACHE_DIRPATH = os.path.join(CONFIG_DIRPATH, "cache")
-LANGUAGES_DIRPATH = os.path.join(LOCALDIR, "seaplayer", "langs")
+LANGUAGES_DIRPATH = os.path.join(LOCAL_DIRPATH, "seaplayer", "langs")
 
 # ! PluginLoader Paths
 #PLUGINS_DIRPATH = os.path.join(CONFIG_DIRPATH, "plugins")
@@ -45,3 +48,8 @@ IMGPATH_IMAGE_NOT_FOUND = os.path.join(ASSETS_DIRPATH, "image-not-found.png")
 
 # ! Assets Loading
 IMG_NOT_FOUND = Image.open(IMGPATH_IMAGE_NOT_FOUND)
+
+# ! Variables
+
+cacher: Cacher = Cacher(CACHE_DIRPATH)
+ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH)
