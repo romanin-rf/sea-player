@@ -115,7 +115,7 @@ class HalfcellRenderer(Renderer):
         
         target_height = (resize[1] * 2) if (resize is not None) else (image.size[1] * 2)
         if target_height % 2 != 0:
-            target_height -= 1
+            target_height += 1
 
         if image.size[1] != target_height:
             resize = (

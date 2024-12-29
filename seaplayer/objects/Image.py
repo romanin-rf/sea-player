@@ -90,13 +90,13 @@ class ImageWidget(Label):
             size = (self.container_viewport.size[0], self.container_viewport.size[1])
         if self.__image is not None:
             self.__content = await asyncio.to_thread(
-                self.image2pixels, self.__image, size, self.__resample
+                self.image2pixels, self.__image, size, self.__resample, self.__render_mode
             )
             self.__last_image_size = size
         else:
             if isinstance(self.__default, Image):
                 self.__content = await asyncio.to_thread(
-                    self.image2pixels, self.__default, size, Resampling.NEAREST
+                    self.image2pixels, self.__default, size, Resampling.NEAREST, self.__render_mode
                 )
             else:
                 self.__content = self.__default

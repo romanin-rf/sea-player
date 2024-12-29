@@ -1,8 +1,8 @@
 import os
 from uuid import UUID
-from importlib.metadata import version as pkgversion
 from textual import on
 from textual.app import App, ComposeResult
+from textual.binding import Binding, BindingsMap
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
 # > Pillow
@@ -27,7 +27,6 @@ from .units import (
 from .config import Config
 from .languages import LanguageLoader
 # > Local Imports (TUI)
-from .objects.agt import AnimatedGradientText
 from .objects.progressbar import PlaybackProgress
 from .objects.image import ImageWidget
 from .objects.playlist import PlayListView, PlayListItem
@@ -37,8 +36,18 @@ from .others.cache import Cacher
 
 # ! Template Variables
 
-def null_widget(text: str):
-    yield AnimatedGradientText( text )
+def generate_bindings(config: Config, ll: LanguageLoader):
+    yield Binding(config.key.quit, "quit", ll.get("footer.quit"))
+    yield Binding(
+        config.key.volume_add, "volume_add",
+        ll.get("footer.volume.plus") \
+            .format(per=round(config.sound.volume_per*100))
+    )
+    yield Binding(
+        config.key.volume_drop, "volume_drop",
+        ll.get("footer.volume.minus") \
+            .format(per=round(config.sound.volume_per*100))
+    )
 
 # ! SeaPlayer Main Application
 class SeaPlayer(App):
@@ -50,16 +59,20 @@ class SeaPlayer(App):
         #os.path.join(CSS_LOCALDIR, "configurate.tcss"),
     ]
     
-    # ^ Runtime Constants
-    
-    INPUT_HANDLERS_TYPES: List[Type[InputHandlerBase]] = [ FileGlobInputHandler ]
-    INPUT_HANDLERS: List[InputHandlerBase] = []
-    
     # ^ Runtime Variables
     
     config: Config = Config(CONFIG_FILEPATH)
     cacher: Cacher = Cacher(CACHE_DIRPATH)
     ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)
+    
+    # ^ Runtime Settings
+    
+    BINDINGS = list(generate_bindings(config, ll))
+    
+    # ^ Runtime Constants
+    
+    INPUT_HANDLERS_TYPES: List[Type[InputHandlerBase]] = [ FileGlobInputHandler ]
+    INPUT_HANDLERS: List[InputHandlerBase] = []
     
     # ^ Playback Variables
     
@@ -238,13 +251,29 @@ class SeaPlayer(App):
             yield self.playlist_sound_input
         yield Footer()
     
+    # ^ SeaPlayer Textual Actions
+    
+    async def action_rewind_forward(self) -> None:
+        pass
+    
+    async def action_rewind_backward(self) -> None:
+        pass
+    
+    async def action_volume_add(self) -> None:
+        if self.config.sound.max_volume >= (self.playbacker.volume + self.config.sound.volume_per):
+            self.playbacker.volume += self.config.sound.volume_per
+    
+    async def action_volume_drop(self) -> None:
+        if (self.playbacker.volume - self.config.sound.volume_per) >= 0.0:
+            self.playbacker.volume -= self.config.sound.volume_per
+    
+    # ^ Textaul Actions
+    
     async def on_ready(self) -> None:
         self.playbacker = Playbacker(self, volume=1.0)
         for input_handler_type in self.INPUT_HANDLERS_TYPES:
             self.INPUT_HANDLERS.append(input_handler_type(self.playbacker))
         self.playbacker.start()
-    
-    # ^ Textaul Actions
     
     async def action_quit(self):
         self.playbacker.terminate()

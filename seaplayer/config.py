@@ -1,5 +1,4 @@
 import yaml
-import json
 try:
     from yaml import CLoader as Loader, CDumper as Dumper
 except ImportError:
@@ -8,7 +7,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 # > Typing
 from typing_extensions import (
-    Annotated
+    Optional,
 )
 # > For Typing
 from PIL.Image import Resampling
@@ -30,12 +29,23 @@ class ConfigImageModel(BaseModel):
     render_mode: Resampling = RenderMode.HALF
 
 class ConfigSoundModel(BaseModel):
-    max_volume: float = Field(3.0)
+    output_device_id: Optional[int]=None
+    max_volume: float = 3.0
+    volume_per: float = 0.05
+    rewind_per: int = 5
+
+class ConfigKeyModel(BaseModel):
+    quit: str               = 'q'
+    rewind_forward: str     = '>,]'
+    rewind_backward: str    = '<,['
+    volume_add: str         = '+'
+    volume_drop: str        = '-'
 
 class ConfigModel(BaseModel):
     main: ConfigMainModel = ConfigMainModel()
     image: ConfigImageModel = ConfigImageModel()
     sound: ConfigSoundModel = ConfigSoundModel()
+    key: ConfigKeyModel = ConfigKeyModel()
     
     def __setstate__(self, state):
         return super().__setstate__(state)
@@ -62,7 +72,7 @@ class Config:
     ) -> ConfigModel:
         try:
             with open(filepath, 'r', encoding='utf-8') as file:
-                return ConfigModel.model_validate(yaml.load(file, Loader=Loader))
+                return ConfigModel.model_validate(yaml.load(file, Loader), strict=True)
         except:
             Config.__dump(filepath, default)
             return default
@@ -87,6 +97,14 @@ class Config:
     @property
     def image(self) -> ConfigImageModel:
         return self._data.image
+    
+    @property
+    def sound(self) -> ConfigSoundModel:
+        return self._data.sound
+    
+    @property
+    def key(self) -> ConfigKeyModel:
+        return self._data.key
 
 # ! Start
 if __name__ == "__main__":

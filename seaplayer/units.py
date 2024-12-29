@@ -6,7 +6,7 @@ from PIL import Image
 
 # ! Metadata
 __title__ = "SeaPlayer"
-__version__ = "0.10.0.dev11"
+__version__ = "0.10.0.dev12"
 __author__ = "Romanin"
 __email__ = "semina054@gmail.com"
 __url__ = "https://github.com/romanin-rf/SeaPlayer"
@@ -26,7 +26,7 @@ else:
 # ! SeaPlayer Paths
 CSS_LOCALDIR = os.path.join(os.path.dirname(__file__), "style")
 ASSETS_DIRPATH = os.path.join(os.path.dirname(__file__), "assets")
-CONFIG_DIRPATH = user_config_dir(__title__, __author__, ensure_exists=True)
+CONFIG_DIRPATH = user_config_dir(__title__, False, ensure_exists=True)
 CONFIG_FILEPATH = os.path.join(CONFIG_DIRPATH, "config.yaml")
 CACHE_DIRPATH = os.path.join(CONFIG_DIRPATH, "cache")
 LANGUAGES_DIRPATH = os.path.join(LOCALDIR, "seaplayer", "langs")

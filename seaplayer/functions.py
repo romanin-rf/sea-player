@@ -1,6 +1,8 @@
 import asyncio
 import inspect
 import itertools
+from asyncio import AbstractEventLoop
+# > Typing
 from typing_extensions import (
     Any,
     Union,
@@ -39,6 +41,7 @@ def formattrs(*args: object, **kwargs: object) -> str:
 # ! Runner Function
 
 def runner_wrapper(
+    loop: AbstractEventLoop,
     func: Union[
         Callable[Params, Coroutine[Any, Any, ReturnType]],
         Awaitable[ReturnType],
@@ -49,9 +52,9 @@ def runner_wrapper(
         def runner_wrapped(*args: Params.args, **kwargs: Params.kwargs) -> ReturnType:
             return asyncio.run(func(*args, **kwargs))
     elif inspect.isawaitable(func):
-        async def await_wrapper(*args, **kwargs):
+        async def await_wrapper(*args: Params.args, **kwargs: Params.kwargs):
             return await func
-        def runner_wrapped(*args, **kwargs):
+        def runner_wrapped(*args: Params.args, **kwargs: Params.kwargs):
             return asyncio.run(await_wrapper(*args, **kwargs))
     elif callable(func):
         runner_wrapped = func

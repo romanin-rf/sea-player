@@ -9,7 +9,9 @@ from seaplayer_audio import CallbackSoundDeviceStreamer
 # > Typing
 from typing_extensions import Dict, Optional
 # > Local Imports
+from .others.cache import Cacher
 from ._types import SupportAudioSource, SupportAudioStreamer
+
 
 # ! Constants
 
@@ -51,17 +53,16 @@ class Playbacker:
         app: App,
         *,
         volume: Optional[float]=None,
-        piece_size: Optional[float]=None,
         tracks: Optional[Dict[UUID, 'Track']]=None,
     ) -> None:
         self.app: App = app
+        self.cacher: Cacher = self.app.cacher
         self.streamer: SupportAudioStreamer = CallbackSoundDeviceStreamer(precallback=self.__loop_frame__)
         self.tracks: Dict[UUID, 'Track'] = tracks or {}
         self.selected_track: Optional[Track] = None
         self.selected_track_uuid: Optional[UUID] = None
         self.state: PlaybackerState = PlaybackerState(0)
-        self.volume: float = volume if volume is not None else 1.0
-        self.piece_size: float = float(piece_size or 0.1)
+        self.volume: float = volume or 1.0
         self.__running = False
     
     # ^ Propertyes
