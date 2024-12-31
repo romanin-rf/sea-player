@@ -8,10 +8,10 @@ from textual.binding import Binding
 from textual.widgets import Header, Footer, OptionList, RadioSet
 from textual.containers import VerticalScroll, Container
 # > Local Imports
+from seaplayer._types import RenderMode
 from seaplayer.units import config, ll
 from seaplayer.config import Config
 from seaplayer.languages import LanguageLoader
-from seaplayer.objects.image import RenderMode
 from seaplayer.objects.optionitem import OptionItem
 from seaplayer.objects.radioitem import RadioItem
 # > Typing
