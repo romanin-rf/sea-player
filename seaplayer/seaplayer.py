@@ -27,6 +27,7 @@ from .units import (
 # > Local Imports (Main)
 from .config import Config
 from .languages import LanguageLoader
+from .screens import SCREENS as APP_SCREENS, screens_bindings as app_screens_bindings
 # > Local Imports (TUI)
 from .objects.progressbar import PlaybackProgress
 from .objects.image import ImageWidget
@@ -57,6 +58,7 @@ def generate_bindings(config: Config, ll: LanguageLoader):
         ll.get("footer.rewind.plus") \
             .format(sec=config.sound.rewind_per)
     )
+    yield from app_screens_bindings(config, ll)
 
 # ! SeaPlayer Main Application
 class SeaPlayer(App):
@@ -67,6 +69,7 @@ class SeaPlayer(App):
     ]
     BINDINGS = list(generate_bindings(config, ll))
     ENABLE_COMMAND_PALETTE = False
+    SCREENS = APP_SCREENS
     
     # ^ Runtime Constants
     
@@ -77,6 +80,13 @@ class SeaPlayer(App):
     
     playbacker: Playbacker
     playback_mode = cacher.var('playback_mode', PlaybackMode.PLAY)
+    
+    # ^ Textual Spetific Methods
+    
+    async def action_smart_push_screen(self, screen: str):
+        if self.get_screen(screen).is_current:
+            return
+        return await super().action_push_screen(screen)
     
     # ^ Spetific Methods
     
@@ -258,12 +268,14 @@ class SeaPlayer(App):
         if self.playbacker.selected_track is not None:
             new_position = self.playbacker.selected_track.get_position() + config.sound.rewind_per
             if self.playbacker.selected_track.duration >= new_position:
+                
                 self.playbacker.selected_track.set_position(new_position)
     
     async def action_rewind_backward(self) -> None:
         if self.playbacker.selected_track is not None:
             new_position = self.playbacker.selected_track.get_position() - config.sound.rewind_per
             if 0.0 >= self.playbacker.selected_track.duration:
+                
                 self.playbacker.selected_track.set_position(new_position)
     
     async def action_volume_add(self) -> None:
@@ -275,6 +287,9 @@ class SeaPlayer(App):
         new_volume = round(self.playbacker.volume - config.sound.volume_per, 2)
         if new_volume >= 0.0:
             self.playbacker.volume = new_volume
+    
+    async def nothing(self) -> None:
+        pass
     
     # ^ Textaul Actions
     
@@ -294,4 +309,4 @@ class SeaPlayer(App):
     
     async def run_async(self, *args, **kwargs):
         await self.on_run()
-        return super().run_async(*args, **kwargs)
+        return await super().run_async(*args, **kwargs)

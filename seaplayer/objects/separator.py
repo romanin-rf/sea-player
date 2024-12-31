@@ -1,8 +1,4 @@
 from textual.widgets import Static
-from rich.console import RenderableType
-from textual.visual import SupportsVisual
-# ! Typing
-from typing_extensions import Union
 
 # ! Horizontal Separator Widget Class
 

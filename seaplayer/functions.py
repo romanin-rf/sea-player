@@ -8,7 +8,7 @@ from typing_extensions import (
     Union,
     Iterable, Generator,
     Callable, Coroutine, ParamSpec, Awaitable,
-    TypeVar, TypeAlias,
+    Type, TypeVar, TypeAlias,
 )
 
 # ! Types
@@ -25,6 +25,12 @@ def iter_dazzle(*iters: Iterable[T]) -> Generator[T, Any, None]:
     for iter in iters:
         for item in iter:
             yield item
+
+def exist_by_type(__type: Type[T], __iter: Iterable[Union[T, object]]) -> bool:
+    for item in __iter:
+        if isinstance(item, __type):
+            return True
+    return False
 
 # ! String Work Functions
 

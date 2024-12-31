@@ -1,10 +1,12 @@
 import os
 import glob
+import functools
 import properties
 # > Typing
 from typing_extensions import (
     Dict, List, Tuple,
-    Optional
+    Union, Optional,
+    _T as T
 )
 # > Local Imports
 from .functions import formattrs
@@ -42,10 +44,12 @@ class Language:
         self.__data, self.__loaded = None, False
         # * Checking
         if not os.path.isfile(self.__name):
-            raise FileNotFoundError
+            raise FileNotFoundError(self.__name)
         # * Metadata Loading
         self.__mark = os.path.splitext(os.path.basename(self.__name))[0].lower()
         self.__title, self.__author, self.__author_url, self.__words = self.__get_metadata()
+        # * Clear cache
+        self.clear_cache()
     
     # ? Magic Methods
     def __str__(self) -> str:
@@ -133,7 +137,8 @@ class Language:
         """Unload a file with a translation from memory."""
         self.__data, self.__loaded = None, False
     
-    def get(self, key: str, default: Optional[str]=None) -> Optional[str]:
+    @functools.lru_cache(maxsize=1024)
+    def get(self, key: str, default: T=None) -> Union[str, T]:
         """Getting a line feed.
         
         Args:
@@ -149,6 +154,9 @@ class Language:
         if self.loaded:
             return self.__data.get(key, default)
         raise LanguageNotLoadedError()
+    
+    def clear_cache(self) -> None:
+        self.get.cache_clear()
 
 # ! Languages Class
 class LanguageLoader:
@@ -195,6 +203,8 @@ class LanguageLoader:
         # * Searching and loading languages
         self.__langs: List[Language] = [Language(lp) for lp in glob.glob(os.path.join(self.__name, "??-???.properties"))]
         self.__dlang, self.__mlang = self.__search_langs(self.__dlm, self.__mlm)
+        # * Clear cache
+        self.clear_cache()
     
     # ? Magic Methods
     def __str__(self) -> str:
@@ -275,6 +285,8 @@ class LanguageLoader:
         return self.__alangs
     
     # ? Public Methods
+    
+    @functools.lru_cache(maxsize=1024)
     def get(self, key: str) -> str:
         """First, it tries to get the translation from the file with the main translation, if it failed, it tries to get it from the file with the default translation, if it failed again, it tries to get them from additional languages (`self.alangs`). If in the end None is still output, then returns the string `"<LTNF>"`, that is, the `Language Text Not Found`.
         
@@ -286,14 +298,17 @@ class LanguageLoader:
         """
         if self.__mlang is None:
             data = self.__dlang.get(key)
-        data = self.__mlang.get(key, self.__dlang.get(key))
+        else:
+            data = self.__mlang.get(key, self.__dlang.get(key))
         if data is None:
             for alang in self.__alangs:
-                if (data:=alang.get(key)) is not None:
+                if (data := alang.get(key)) is not None:
                     break
-        return data if data is not None else f"<LTNF:{key}>"
+        if data is not None:
+            return data
+        return f"<LTNF:{key}>"
     
-    def merge(self, ll) -> None:
+    def merge(self, ll: 'LanguageLoader') -> None:
         """Adding additional languages (`self.alangs`).
         
         Args:
@@ -301,3 +316,6 @@ class LanguageLoader:
         """
         assert isinstance(ll, LanguageLoader)
         self.__alangs.append(ll)
+    
+    def clear_cache(self) -> None:
+        self.get.cache_clear()

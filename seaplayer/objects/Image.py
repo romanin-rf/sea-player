@@ -1,5 +1,5 @@
 import asyncio
-from enum import Enum
+from enum import IntEnum
 from PIL.Image import Image, Resampling
 from textual.widgets import Label
 from rich.console import RenderableType
@@ -13,10 +13,10 @@ from typing_extensions import (
 
 # ! Types
 
-class RenderMode(Enum):
+class RenderMode(IntEnum):
     NONE = 0
-    HALF = 1
-    FULL = 2
+    FULL = 1
+    HALF = 2
 
 # ! Main Class
 class ImageWidget(Label):
@@ -40,10 +40,10 @@ class ImageWidget(Label):
         match render_mode:
             case RenderMode.NONE:
                 return RichPixels.from_image(image, resize, resample)
-            case RenderMode.HALF:
-                return RichPixels.from_segments(HalfcellRenderer().render(image, resize, resample))
             case RenderMode.FULL:
                 return RichPixels.from_segments(FullcellRenderer().render(image, resize, resample))
+            case RenderMode.HALF:
+                return RichPixels.from_segments(HalfcellRenderer().render(image, resize, resample))
         raise ValueError(f'{render_mode=!r}')
     
     def __init__(

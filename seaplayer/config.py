@@ -4,7 +4,7 @@ try:
 except ImportError:
     from yaml import SafeLoader as Loader, SafeDumper as Dumper
 from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 # > Typing
 from typing_extensions import (
     Optional,
@@ -31,10 +31,10 @@ class ConfigSoundModel(BaseModel):
     rewind_per: int = 5
 
 class ConfigKeyModel(BaseModel):
-    quit: str               = 'q'
-    rewind_forward: str     = '>,]'
-    rewind_backward: str    = '<,['
-    volume_add: str         = '+'
+    quit: str               = 'q,й'
+    rewind_forward: str     = '],х,*'
+    rewind_backward: str    = '[,ъ,/'
+    volume_add: str         = '+,='
     volume_drop: str        = '-'
 
 class ConfigModel(BaseModel):
@@ -65,8 +65,8 @@ class Config:
     ) -> ConfigModel:
         try:
             with open(filepath, 'r', encoding='utf-8') as file:
-                return ConfigModel.model_validate(yaml.load(file, Loader), strict=True)
-        except:
+                return ConfigModel.model_validate(yaml.load(file, Loader), strict=False)
+        except ValidationError:
             Config.__dump(filepath, default)
             return default
     
