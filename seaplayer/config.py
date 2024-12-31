@@ -32,8 +32,8 @@ class ConfigSoundModel(BaseModel):
 
 class ConfigKeyModel(BaseModel):
     quit: str               = 'q,й'
-    rewind_forward: str     = '],х,*'
-    rewind_backward: str    = '[,ъ,/'
+    rewind_forward: str     = '],*'
+    rewind_backward: str    = '[,/'
     volume_add: str         = '+,='
     volume_drop: str        = '-'
 

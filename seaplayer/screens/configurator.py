@@ -14,6 +14,12 @@ from seaplayer.languages import LanguageLoader
 from seaplayer.objects.image import RenderMode
 from seaplayer.objects.optionitem import OptionItem
 from seaplayer.objects.radioitem import RadioItem
+# > Typing
+from typing_extensions import (
+    Any, Tuple,
+    Iterable, Mapping,
+    Union,
+)
 
 # ! Types
 
@@ -36,7 +42,7 @@ class ConfigurationScreen(Screen):
     BINDINGS = [
         Binding('escape', 'app.pop_screen', 'Close', priority=True),
     ]
-    SUB_TITLE = 'Configuration'
+    SUB_TITLE = ll.get('configurate')
     CSS = """
     VerticalScroll.configurations-container {
         border: solid cyan;
@@ -55,7 +61,32 @@ class ConfigurationScreen(Screen):
     
     configurate_state = ConfigurateState(0)
     
-    # ^ Configurate Parameters
+    # ^ Create Configurate Parameters Methods
+    
+    def create_configurate_literal(self,
+        config: Config,
+        ll: LanguageLoader,
+        id: str,
+        key_name: str,
+        key_desc: str,
+        variants: Union[Iterable[Tuple[str, Any]], Mapping[str, Any]],
+        current_value: Any,
+        restart_request: bool=True
+    ) -> ComposeResult:
+        yield from []
+        variants = {ll.get(key): data for key, data in dict(variants).items()}
+        with Container(classes='configuration-item-container') as container:
+            container.border_title = ll.get(key_name)
+            container.border_subtitle = ll.get(key_desc) + _rr(restart_request)
+            length = 0
+            with RadioSet(id=id):
+                for text, data in variants.items():
+                    value = (current_value == data)
+                    length += 1
+                    yield RadioItem(text, value, data=data)
+            container.styles.height = length + 4
+    
+    # ^ Spetific Configurate Parameters Methods
     
     def create_configurate_language(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
@@ -82,49 +113,42 @@ class ConfigurationScreen(Screen):
     
     def create_configurate_device_id(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
+        if ConfigurateState.DEVICE_ID not in self.configurate_state:
+            self.configurate_state |= ConfigurateState.DEVICE_ID
     
     def create_configurate_image_resample_method(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
         if ConfigurateState.IMAGE_RESAMPLING not in self.configurate_state:
-            variants = (
-                (ll.get('configurate.image.resample_method.nearest'), Resampling.NEAREST),
-                (ll.get('configurate.image.resample_method.lanczos'), Resampling.LANCZOS),
-                (ll.get('configurate.image.resample_method.bilinear'), Resampling.BILINEAR),
-                (ll.get('configurate.image.resample_method.bicubic'), Resampling.BICUBIC),
-                (ll.get('configurate.image.resample_method.box'), Resampling.BOX),
-                (ll.get('configurate.image.resample_method.hamming'), Resampling.HAMMING),
+            yield from self.create_configurate_literal(
+                config, ll, 'configurate-image-resample-radioset',
+                'configurate.image.resample_method',
+                'configurate.image.resample_method.desc',
+                {
+                    'configurate.image.resample_method.nearest': Resampling.NEAREST,
+                    'configurate.image.resample_method.lanczos': Resampling.LANCZOS,
+                    'configurate.image.resample_method.bilinear': Resampling.BILINEAR,
+                    'configurate.image.resample_method.bicubic': Resampling.BICUBIC,
+                    'configurate.image.resample_method.box': Resampling.BOX,
+                    'configurate.image.resample_method.hamming': Resampling.HAMMING,
+                },
+                config.image.resample
             )
-            with Container(classes='configuration-item-container') as container:
-                container.border_title = ll.get('configurate.image.resample_method')
-                container.border_subtitle = ll.get('configurate.image.resample_method.desc') + _rr(True)
-                length = 0
-                with RadioSet(id='configurate-image-resample-radioset'):
-                    for text, data in variants:
-                        value = (config.image.resample == data)
-                        length += 1
-                        yield RadioItem(text, value, data=data)
-                container.styles.height = length + 4
             self.configurate_state |= ConfigurateState.IMAGE_RESAMPLING
     
     def create_configurate_image_render_mode(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
         if ConfigurateState.IMAGE_RENDER_MODE not in self.configurate_state:
-            variants = (
-                (ll.get('configurate.image.render_mode.none'), RenderMode.NONE),
-                (ll.get('configurate.image.render_mode.half'), RenderMode.FULL),
-                (ll.get('configurate.image.render_mode.full'), RenderMode.HALF),
+            yield from self.create_configurate_literal(
+                config, ll, 'configurate-image-render-mode-radioset',
+                'configurate.image.render_mode',
+                'configurate.image.render_mode.desc',
+                {
+                    'configurate.image.render_mode.none': RenderMode.NONE,
+                    'configurate.image.render_mode.full': RenderMode.FULL,
+                    'configurate.image.render_mode.half': RenderMode.HALF,
+                },
+                config.image.render_mode
             )
-            with Container(classes='configuration-item-container') as container:
-                container.border_title = ll.get('configurate.image.render_mode')
-                container.border_subtitle = ll.get('configurate.image.render_mode.desc') + _rr(True)
-                length = 0
-                with RadioSet(id='configurate-image-render-mode-radioset'):
-                    for text, data in variants:
-                        value = (config.image.render_mode == data)
-                        length += 1
-                        yield RadioItem(text, value, data=data)
-                container.styles.height = length + 4
-            self.configurate_state |= ConfigurateState.IMAGE_RENDER_MODE
     
     # ^ Callbacks
     

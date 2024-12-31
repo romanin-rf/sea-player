@@ -177,6 +177,35 @@ class FullcellRenderer(Renderer):
             else self.null_style
         )
         return Segment("  ", style)
+    
+    def render(self, image: Image, resize: Optional[Tuple[int, int]], resample: Optional[Resampling]=None) -> List[Segment]:
+        """
+        Render an image to Segments.
+        """
+        resample = resample or Resampling.NEAREST
+        if image.mode != "RGBA":
+            image = image.convert("RGBA")
+        if resize is not None:
+            resize = (int(resize[0] // 2), resize[1])
+            image = image.resize(resize, resample=resample)
+
+        get_pixel = image.getpixel
+        width, height = image.width, image.height
+
+        segments = []
+
+        for y in self._get_range(height):
+            this_row: List[Segment] = []
+
+            this_row += self._render_line(
+                line_index=y, width=width, get_pixel=get_pixel
+            )
+            this_row.append(Segment("\n", self.null_style))
+
+            if not all(t[1] == "" for t in this_row[:-1]):
+                segments += this_row
+
+        return segments
 
 # ! Pixels Container Class
 

@@ -5,8 +5,6 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
-# > Pillow
-from PIL import Image
 # > Typing
 from typing_extensions import (
     List,
@@ -15,7 +13,7 @@ from typing_extensions import (
 # > Local Imports (Types)
 from ._types import PlaybackMode
 # > Local Imports (seaplayer)
-from .track import PlaybackerState, Playbacker, PlaybackerChangeStateMessage
+from .track import PlaybackerState, Playbacker, PlaybackerChangeStateMessage, PlaybackerTrackEndMessage
 from .input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
 from .units import (
@@ -202,6 +200,10 @@ class SeaPlayer(App):
     def sound_change_state(self, event: PlaybackerChangeStateMessage) -> None:
         self.refresh_selected_label()
     
+    @on(PlaybackerTrackEndMessage)
+    def sound_track_ended(self, event: PlaybackerTrackEndMessage) -> None:
+        pass
+    
     # ^ Compose Method
     
     def compose(self) -> ComposeResult:
@@ -213,7 +215,11 @@ class SeaPlayer(App):
         # * Image Object Init
         
         self.player_selected_label = Label('<{0}>'.format(ll.get('sound.status.none')), classes="player-selected-label")
-        self.player_image = ImageWidget(IMG_NOT_FOUND, resample=Image.Resampling.BILINEAR)
+        self.player_image = ImageWidget(
+            IMG_NOT_FOUND, 
+            resample=config.image.resample,
+            render_mode=config.image.render_mode
+        )
         
         # * Compositions Screen
         
@@ -268,15 +274,15 @@ class SeaPlayer(App):
         if self.playbacker.selected_track is not None:
             new_position = self.playbacker.selected_track.get_position() + config.sound.rewind_per
             if self.playbacker.selected_track.duration >= new_position:
-                
                 self.playbacker.selected_track.set_position(new_position)
     
     async def action_rewind_backward(self) -> None:
         if self.playbacker.selected_track is not None:
             new_position = self.playbacker.selected_track.get_position() - config.sound.rewind_per
-            if 0.0 >= self.playbacker.selected_track.duration:
-                
+            if new_position >= 0.0:
                 self.playbacker.selected_track.set_position(new_position)
+            else:
+                self.playbacker.selected_track.set_position(0.0)
     
     async def action_volume_add(self) -> None:
         new_volume = round(self.playbacker.volume + config.sound.volume_per, 2)

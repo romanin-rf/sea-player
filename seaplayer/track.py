@@ -5,7 +5,6 @@ from enum import Flag, auto
 from uuid import uuid4, UUID
 from textual.app import App
 from textual.message import Message
-from threading import Semaphore
 # > SeaPlayer (Audio)
 from seaplayer_audio import CallbackSoundDeviceStreamer
 from seaplayer_audio._types import AudioSamplerate, AudioChannels, AudioDType

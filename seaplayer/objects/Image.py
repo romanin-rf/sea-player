@@ -36,7 +36,7 @@ class ImageWidget(Label):
         resample: Optional[Resampling]=None,
         render_mode: Optional[RenderMode]=None
     ) -> RichPixels:
-        render_mode = render_mode or RenderMode.NONE
+        render_mode = render_mode if render_mode is not None else RenderMode.NONE
         match render_mode:
             case RenderMode.NONE:
                 return RichPixels.from_image(image, resize, resample)
@@ -55,8 +55,8 @@ class ImageWidget(Label):
     ) -> None:
         self.__default = default or "<image not found>"
         self.__image = image
-        self.__resample = resample or Resampling.NEAREST
-        self.__render_mode = render_mode or RenderMode.HALF
+        self.__resample = resample if resample is not None else Resampling.NEAREST
+        self.__render_mode = render_mode if render_mode is not None else RenderMode.HALF
         self.__last_image_size = None
         if image is None:
             if isinstance(self.__default, Image):
