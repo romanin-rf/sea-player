@@ -1,6 +1,6 @@
 from os import PathLike
 from pathlib import Path, PurePath, PosixPath, PurePosixPath, PureWindowsPath, WindowsPath
-from enum import Enum, IntEnum
+from enum import Enum
 # > Typing
 from typing_extensions import (
     Union,
@@ -27,7 +27,3 @@ class PlaybackMode(Enum):
 
 # ! Object Types
 
-class RenderMode(IntEnum):
-    NONE = 0
-    FULL = 1
-    HALF = 2

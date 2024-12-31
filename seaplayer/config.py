@@ -12,7 +12,8 @@ from typing_extensions import (
 # > For Typing
 from PIL.Image import Resampling
 # > Local Imports
-from seaplayer._types import FilePathType, RenderMode
+from seaplayer._types import FilePathType
+from seaplayer.objects.image import RenderMode
 
 # ! Config Models
 
