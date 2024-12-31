@@ -11,7 +11,7 @@ from seaplayer.others.cache import Cacher
 # ! Metadata
 
 __title__ = "SeaPlayer"
-__version__ = "0.10.0.dev24"
+__version__ = "0.10.0.dev25"
 __author__ = "Romanin"
 __email__ = "semina054@gmail.com"
 __url__ = "https://github.com/romanin-rf/SeaPlayer"

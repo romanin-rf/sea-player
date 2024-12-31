@@ -1,7 +1,7 @@
 import asyncio
-from PIL.Image import Image, Resampling
 from textual.widgets import Label
 from rich.console import RenderableType
+from PIL import Image as PILImage
 # > Typing
 from typing_extensions import (
     Tuple,
@@ -24,9 +24,9 @@ class ImageWidget(Label):
     
     @staticmethod
     def image2pixels(
-        image: Image,
+        image: PILImage.Image,
         resize: Optional[Tuple[int, int]]=None,
-        resample: Optional[Resampling]=None,
+        resample: Optional[PILImage.Resampling]=None,
         render_mode: Optional[RenderMode]=None
     ) -> RichPixels:
         render_mode = render_mode if render_mode is not None else RenderMode.NONE
@@ -41,21 +41,21 @@ class ImageWidget(Label):
     
     def __init__(
         self,
-        default: Optional[Union[Image, RenderableType]]=None,
-        image: Optional[Image]=None,
-        resample: Optional[Resampling]=None,
+        default: Optional[Union[PILImage.Image, RenderableType]]=None,
+        image: Optional[PILImage.Image]=None,
+        resample: Optional[PILImage.Resampling]=None,
         render_mode: Optional[RenderMode]=None
     ) -> None:
         self.__default = default or "<image not found>"
         self.__image = image
-        self.__resample = resample if resample is not None else Resampling.NEAREST
+        self.__resample = resample if resample is not None else PILImage.Resampling.NEAREST
         self.__render_mode = render_mode if render_mode is not None else RenderMode.HALF
         self.__last_image_size = None
         if image is None:
-            if isinstance(self.__default, Image):
+            if isinstance(self.__default, PILImage.Image):
                 self.__content = self.image2pixels(
                     self.__default, 
-                    resample=Resampling.NEAREST, 
+                    resample=PILImage.Resampling.NEAREST,
                     render_mode=self.__render_mode
                 )
             else:
@@ -73,7 +73,7 @@ class ImageWidget(Label):
         if self.__last_image_size != size:
             await self.refresh_image(size)
     
-    async def update_image(self, image: Optional[Image]=None) -> None:
+    async def update_image(self, image: Optional[PILImage.Image]=None) -> None:
         self.__image = image
         await self.refresh_image()
         self.update(self.__content)
@@ -87,9 +87,9 @@ class ImageWidget(Label):
             )
             self.__last_image_size = size
         else:
-            if isinstance(self.__default, Image):
+            if isinstance(self.__default, PILImage.Image):
                 self.__content = await asyncio.to_thread(
-                    self.image2pixels, self.__default, size, Resampling.NEAREST, self.__render_mode
+                    self.image2pixels, self.__default, size, PILImage.Resampling.NEAREST, self.__render_mode
                 )
             else:
                 self.__content = self.__default
