@@ -65,7 +65,7 @@ class Config:
         try:
             with open(filepath, 'r', encoding='utf-8') as file:
                 return ConfigModel.model_validate(yaml.load(file, Loader), strict=False)
-        except ValidationError:
+        except (ValidationError, FileNotFoundError):
             Config.__dump(filepath, default)
             return default
     
