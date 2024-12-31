@@ -1,4 +1,4 @@
-from .main import main
+from seaplayer.main import main
 
 # ! Run
 

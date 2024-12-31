@@ -1,6 +1,7 @@
 import asyncio
 import rich_click as click
 from rich.console import Console
+# > Typing
 from typing_extensions import Literal
 
 # ! Variable
@@ -13,8 +14,6 @@ def seaplayer_main(
     run_method: Literal['async', 'sync'],
     **kwargs
 ) -> None:
-    
-    # * SeaPlayer Run
     try:
         from seaplayer.seaplayer import SeaPlayer
         app = SeaPlayer()

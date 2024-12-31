@@ -9,7 +9,7 @@ from typing_extensions import (
     Generator,
 )
 # > Local Imports
-from .track import Playbacker, Track
+from seaplayer.track import Playbacker, Track
 
 # ! Abstract Class
 

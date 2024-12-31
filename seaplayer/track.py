@@ -11,8 +11,8 @@ from seaplayer_audio._types import AudioSamplerate, AudioChannels, AudioDType
 # > Typing
 from typing_extensions import Dict, Optional
 # > Local Imports
-from ._types import SupportAudioSource, SupportAudioStreamer
-from .units import cacher
+from seaplayer._types import SupportAudioSource, SupportAudioStreamer
+from seaplayer.units import cacher
 
 # ! Constants
 

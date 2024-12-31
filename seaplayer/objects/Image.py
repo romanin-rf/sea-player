@@ -3,13 +3,13 @@ from enum import IntEnum
 from PIL.Image import Image, Resampling
 from textual.widgets import Label
 from rich.console import RenderableType
-# > Local Imports
-from ..others.ripix import RichPixels, HalfcellRenderer, FullcellRenderer
 # > Typing
 from typing_extensions import (
     Tuple,
     Union, Optional,
 )
+# > Local Imports
+from seaplayer.others.ripix import RichPixels, HalfcellRenderer, FullcellRenderer
 
 # ! Types
 

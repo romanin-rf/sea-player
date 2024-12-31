@@ -9,8 +9,8 @@ from typing_extensions import (
     _T as T
 )
 # > Local Imports
-from .functions import formattrs
-from .exceptions import LanguageNotExistError, LanguageNotLoadedError
+from seaplayer.functions import formattrs
+from seaplayer.exceptions import LanguageNotExistError, LanguageNotLoadedError
 
 # ! Language Class
 class Language:

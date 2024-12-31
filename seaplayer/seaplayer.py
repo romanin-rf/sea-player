@@ -13,24 +13,24 @@ from typing_extensions import (
 # > Local Imports (Types)
 from ._types import PlaybackMode
 # > Local Imports (seaplayer)
-from .track import PlaybackerState, Playbacker, PlaybackerChangeStateMessage, PlaybackerTrackEndMessage
-from .input_handler import InputHandlerBase, FileGlobInputHandler
+from seaplayer.track import PlaybackerState, Playbacker, PlaybackerChangeStateMessage, PlaybackerTrackEndMessage
+from seaplayer.input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
-from .units import (
+from seaplayer.units import (
     ll, config, cacher,
     __title__, __version__,
     CSS_LOCALDIR,
     IMG_NOT_FOUND
 )
 # > Local Imports (Main)
-from .config import Config
-from .languages import LanguageLoader
-from .screens import SCREENS as APP_SCREENS, screens_bindings as app_screens_bindings
+from seaplayer.config import Config
+from seaplayer.languages import LanguageLoader
+from seaplayer.screens import SCREENS as APP_SCREENS, screens_bindings as app_screens_bindings
 # > Local Imports (TUI)
-from .objects.progressbar import PlaybackProgress
-from .objects.image import ImageWidget
-from .objects.playlist import PlayListView, PlayListItem
-from .objects.separator import HorizontalSeporator
+from seaplayer.objects.progressbar import PlaybackProgress
+from seaplayer.objects.image import ImageWidget
+from seaplayer.objects.playlist import PlayListView, PlayListItem
+from seaplayer.objects.separator import HorizontalSeporator
 
 # ! Template Variables
 
