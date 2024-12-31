@@ -1,5 +1,4 @@
 import asyncio
-from enum import IntEnum
 from PIL.Image import Image, Resampling
 from textual.widgets import Label
 from rich.console import RenderableType
@@ -9,14 +8,8 @@ from typing_extensions import (
     Union, Optional,
 )
 # > Local Imports
+from seaplayer._types import RenderMode
 from seaplayer.others.ripix import RichPixels, HalfcellRenderer, FullcellRenderer
-
-# ! Types
-
-class RenderMode(IntEnum):
-    NONE = 0
-    FULL = 1
-    HALF = 2
 
 # ! Main Class
 class ImageWidget(Label):

@@ -12,8 +12,7 @@ from typing_extensions import (
 # > For Typing
 from PIL.Image import Resampling
 # > Local Imports
-from seaplayer._types import FilePathType
-from seaplayer.objects.image import RenderMode
+from seaplayer._types import FilePathType, RenderMode
 
 # ! Config Models
 
@@ -22,7 +21,7 @@ class ConfigMainModel(BaseModel):
 
 class ConfigImageModel(BaseModel):
     resample: Resampling = Resampling.BILINEAR
-    render_mode: Resampling = RenderMode.HALF
+    render_mode: RenderMode = RenderMode.HALF
 
 class ConfigSoundModel(BaseModel):
     output_device_id: Optional[int]=None
