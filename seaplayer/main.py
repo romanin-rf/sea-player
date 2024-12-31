@@ -30,7 +30,7 @@ def seaplayer_main(
     except KeyboardInterrupt:
         exit(0)
     except:
-        console.print_exception(show_locals=True, word_wrap=True, width=console.width)
+        console.print_exception(show_locals=True, word_wrap=True, width=console.width, max_frames=0)
         exit(1)
 
 # ! SeaPlayer CLI
