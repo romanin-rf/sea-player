@@ -2,12 +2,13 @@ import os
 from uuid import UUID
 from textual import on
 from textual.app import App, ComposeResult
-from textual.binding import Binding
+from textual.binding import Binding, BindingType
 from textual.widgets import Label, Input, Button, Header, Footer
 from textual.containers import Container, Vertical, Horizontal
 # > Typing
 from typing_extensions import (
     List,
+    Iterator,
     Type
 )
 # > Local Imports (Types)
@@ -34,7 +35,7 @@ from seaplayer.objects.separator import HorizontalSeporator
 
 # ! Template Variables
 
-def generate_bindings(config: Config, ll: LanguageLoader):
+def generate_bindings(config: Config, ll: LanguageLoader) -> Iterator[BindingType]:
     yield Binding(config.key.quit, "quit", ll.get("footer.quit"))
     yield Binding(
         config.key.volume_add, "volume_add",
@@ -71,7 +72,9 @@ class SeaPlayer(App):
     
     # ^ Runtime Constants
     
-    INPUT_HANDLERS_TYPES: List[Type[InputHandlerBase]] = [ FileGlobInputHandler ]
+    INPUT_HANDLERS_TYPES: List[Type[InputHandlerBase]] = [
+        FileGlobInputHandler
+    ]
     INPUT_HANDLERS: List[InputHandlerBase] = []
     
     # ^ Playback Variables
@@ -81,7 +84,7 @@ class SeaPlayer(App):
     
     # ^ Textual Spetific Methods
     
-    async def action_smart_push_screen(self, screen: str):
+    async def action_smart_push_screen(self, screen: str) -> None:
         if self.get_screen(screen).is_current:
             return
         return await super().action_push_screen(screen)
@@ -103,7 +106,7 @@ class SeaPlayer(App):
             return text, position, self.playbacker.selected_track.duration
         return f"00:00 / 00:00 | {round(self.playbacker.volume*100):>3}%", None, None
     
-    def refresh_selected_label(self):
+    def refresh_selected_label(self) -> None:
         if self.playbacker.selected_track is not None:
             if PlaybackerState.PLAYING in self.playbacker.state:
                 if PlaybackerState.PAUSED not in self.playbacker.state:

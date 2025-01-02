@@ -12,10 +12,10 @@ from seaplayer_audio.streamers import CallbackSoundDeviceStreamer
 
 # ! Type Aliases
 
-PathlibType: TypeAlias = Union[Path, PurePath, PosixPath, PurePosixPath, PureWindowsPath, WindowsPath]
-FilePathType: TypeAlias = Union[str, bytes, PathlibType, PathLike[str], PathLike[bytes]]
+PathlibType: TypeAlias = Path | PurePath | PosixPath | PurePosixPath | PureWindowsPath | WindowsPath
+FilePathType: TypeAlias = str | bytes | PathlibType | PathLike[str] | PathLike[bytes]
 
-SupportAudioSource: TypeAlias = Union[FileAudioSource]
+SupportAudioSource: TypeAlias = FileAudioSource
 SupportAudioStreamer: TypeAlias = CallbackSoundDeviceStreamer
 
 # ! Playback Types
@@ -24,6 +24,3 @@ class PlaybackMode(Enum):
     PLAY = 0
     REPLAY_SOUND = 1
     REPLAY_LIST = 2
-
-# ! Object Types
-

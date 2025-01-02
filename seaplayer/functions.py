@@ -13,10 +13,10 @@ from typing_extensions import (
 
 # ! Types
 
-T = TypeVar('T')
-ReturnType = TypeVar('ReturnType')
-Params = ParamSpec('Params')
-AsyncMethod: TypeAlias = Callable[..., Coroutine]
+T                           = TypeVar('T')
+ReturnType                  = TypeVar('ReturnType')
+Params                      = ParamSpec('Params')
+AsyncMethod: TypeAlias      = Callable[..., Coroutine]
 
 # ! Itertools
 
@@ -26,7 +26,7 @@ def iter_dazzle(*iters: Iterable[T]) -> Generator[T, Any, None]:
         for item in iter:
             yield item
 
-def exist_by_type(__type: Type[T], __iter: Iterable[Union[T, object]]) -> bool:
+def exist_by_type(__type: Type[T], __iter: Iterable[T | object]) -> bool:
     for item in __iter:
         if isinstance(item, __type):
             return True
@@ -47,12 +47,10 @@ def formattrs(*args: object, **kwargs: object) -> str:
 # ! Runner Function
 
 def runner_wrapper(
-    loop: AbstractEventLoop,
-    func: Union[
-        Callable[Params, Coroutine[Any, Any, ReturnType]],
-        Awaitable[ReturnType],
+    func:
+        Callable[Params, Coroutine[Any, Any, ReturnType]] |
+        Awaitable[ReturnType] |
         Callable[Params, ReturnType]
-    ]
 ) -> Callable[Params, ReturnType]:
     if inspect.iscoroutinefunction(func):
         def runner_wrapped(*args: Params.args, **kwargs: Params.kwargs) -> ReturnType:

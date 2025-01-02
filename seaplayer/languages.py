@@ -20,7 +20,7 @@ class Language:
         with open(filepath, 'r', errors='ignore', encoding='utf-8') as file:
             return properties.load(file)
     
-    def __get_metadata(self) -> Tuple[str, str, Optional[str], Dict[str, str]]:
+    def __get_metadata(self) -> Tuple[str, str, str | None, Dict[str, str]]:
         data = self.__load_file(self.__name)
         return \
             data.get("language.metadata.title", f"<LTNF:{self.__mark}>"), \
@@ -102,7 +102,7 @@ class Language:
         return self.__author
     
     @property
-    def author_url(self) -> Optional[str]:
+    def author_url(self) -> str | None:
         """The link to the author of the translation is taken from the translation file.
         
         Returns:
@@ -138,7 +138,7 @@ class Language:
         self.__data, self.__loaded = None, False
     
     @functools.lru_cache(maxsize=1024)
-    def get(self, key: str, default: T=None) -> Union[str, T]:
+    def get(self, key: str, default: T=None) -> str | T:
         """Getting a line feed.
         
         Args:
@@ -162,7 +162,7 @@ class Language:
 class LanguageLoader:
     """The loader of files with translation."""
     # ? Main Methods
-    def __search_langs(self, dlm: str, mlm: str) -> Tuple[Language, Optional[Language]]:
+    def __search_langs(self, dlm: str, mlm: str) -> Tuple[Language, Language | None]:
         dl, ml = None, None
         for lang in self.langs:
             if lang.mark == dlm:
@@ -267,7 +267,7 @@ class LanguageLoader:
         return self.__dlang
     
     @property
-    def main_lang(self) -> Optional[Language]:
+    def main_lang(self) -> Language | None:
         """An image of the `Language` class reflecting the uploaded file with the main translation.
         
         Returns:

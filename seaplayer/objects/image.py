@@ -6,7 +6,6 @@ from PIL.Image import Image, Resampling
 # > Typing
 from typing_extensions import (
     Tuple,
-    Union, Optional,
 )
 # > Local Imports
 from seaplayer.others.ripix import RichPixels, HalfcellRenderer, FullcellRenderer
@@ -32,9 +31,9 @@ class ImageWidget(Label):
     @staticmethod
     def image2pixels(
         image: Image,
-        resize: Optional[Tuple[int, int]]=None,
-        resample: Optional[Resampling]=None,
-        render_mode: Optional[RenderMode]=None
+        resize: Tuple[int, int] | None = None,
+        resample: Resampling | None = None,
+        render_mode: RenderMode | None = None
     ) -> RichPixels:
         render_mode = render_mode if render_mode is not None else RenderMode.NONE
         match render_mode:
@@ -48,10 +47,15 @@ class ImageWidget(Label):
     
     def __init__(
         self,
-        default: Optional[Union[Image, RenderableType]]=None,
-        image: Optional[Image]=None,
-        resample: Optional[Resampling]=None,
-        render_mode: Optional[RenderMode]=None
+        default: Image | RenderableType | None = None,
+        image: Image | None = None,
+        resample: Resampling | None = None,
+        render_mode: RenderMode | None = None,
+        *,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False
     ) -> None:
         self.__default = default or "<image not found>"
         self.__image = image
@@ -73,19 +77,19 @@ class ImageWidget(Label):
                 resample=self.__resample,
                 render_mode=self.__render_mode
             )
-        super().__init__(self.__content)
+        super().__init__(self.__content, name=name, id=id, classes=classes, disabled=disabled)
     
     async def on_resize(self):
         size = (self.container_viewport.size[0], self.container_viewport.size[1])
         if self.__last_image_size != size:
             await self.refresh_image(size)
     
-    async def update_image(self, image: Optional[Image]=None) -> None:
+    async def update_image(self, image: Image | None = None) -> None:
         self.__image = image
         await self.refresh_image()
         self.update(self.__content)
     
-    async def refresh_image(self, size: Optional[Tuple[int, int]]=None) -> None:
+    async def refresh_image(self, size: Tuple[int, int] | None = None) -> None:
         if size is None:
             size = (self.container_viewport.size[0], self.container_viewport.size[1])
         if self.__image is not None:

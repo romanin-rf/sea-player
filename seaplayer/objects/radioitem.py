@@ -3,7 +3,6 @@ from rich.console import RenderableType
 from textual.widgets import RadioButton
 # > Typing
 from typing_extensions import (
-    Optional,
     Generic, 
     _T as T
 )
@@ -12,16 +11,16 @@ from typing_extensions import (
 
 class RadioItem(RadioButton, Generic[T]):
     def __init__(self,
-        label: TextType="",
-        value: bool=False,
-        button_first: bool=True,
-        data: T=None,
+        label: TextType = '',
+        value: bool = False,
+        button_first: bool = True,
+        data: T = None,
         *,
-        name: Optional[None]=None,
-        id: Optional[str]=None,
-        classes: Optional[str]=None,
-        disabled: bool=False,
-        tooltip: Optional[RenderableType]=None
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
+        tooltip: RenderableType | None = None
     ) -> None:
         self.data: T = data
         super().__init__(

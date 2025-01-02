@@ -8,7 +8,6 @@ from rich.text import Text, TextType
 # > Typing
 from typing_extensions import (
     Tuple,
-    Optional
 )
 
 
@@ -24,12 +23,12 @@ class AnimatedGradientText(LoadingIndicator):
     
     def __init__(self,
         text: TextType='Loading...',
-        gradient_colors: Optional[Tuple[Color, Color]]=None,
+        gradient_colors: Tuple[Color, Color] | None = None,
         *,
-        name: Optional[str]=None,
-        id: Optional[str]=None,
-        classes: Optional[str]=None,
-        disabled: bool=False,
+        name: str | None = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False,
     ):
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
         _, _, background, color = self.colors

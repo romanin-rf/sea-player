@@ -1,7 +1,5 @@
 from uuid import UUID
 from textual.widgets import Label, ListView, ListItem
-# > Typing
-from typing_extensions import Optional
 
 # ! Playlist Item Widget Class
 
@@ -30,14 +28,14 @@ class PlayListItem(ListItem):
     
     def __init__(self,
         uuid: UUID,
-        first: str='',
-        second: str='',
-        third: str='',
+        first: str = '',
+        second: str = '',
+        third: str = '',
         *,
-        name: Optional[str]=None,
-        id: Optional[str]=None,
-        classes: Optional[str]=None,
-        disabled: bool=False
+        name: str = None,
+        id: str | None = None,
+        classes: str | None = None,
+        disabled: bool = False
     ) -> None:
         self.uuid = uuid
         self.label_first, self.label_second, self.label_third = \
@@ -50,9 +48,9 @@ class PlayListItem(ListItem):
         )
     
     def update_labels(self,
-        first: Optional[str]=None,
-        second: Optional[str]=None,
-        third: Optional[str]=None
+        first: str | None = None,
+        second: str | None = None,
+        third: str | None = None
     ) -> None:
         if first is not None:
             self.label_first.renderable = first
@@ -97,6 +95,9 @@ class PlayListView(ListView):
         self.post_message(self.Selected(self, selected_child))
     
     async def create_item(self,
-        uuid: UUID, first: str='', second: str='', third: str=''
+        uuid: UUID,
+        first: str = '',
+        second: str = '',
+        third: str = ''
     ) -> None:
         await self.append(PlayListItem(uuid, first, second, third))

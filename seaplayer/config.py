@@ -5,10 +5,6 @@ except ImportError:
     from yaml import SafeLoader as Loader, SafeDumper as Dumper
 from pathlib import Path
 from pydantic import BaseModel, Field, ValidationError
-# > Typing
-from typing_extensions import (
-    Optional,
-)
 # > For Typing
 from PIL.Image import Resampling
 # > Local Imports
@@ -25,7 +21,7 @@ class ConfigImageModel(BaseModel):
     render_mode: RenderMode = RenderMode.HALF
 
 class ConfigSoundModel(BaseModel):
-    output_device_id: Optional[int]=None
+    output_device_id: int | None = None
     max_volume: float = 3.0
     volume_per: float = 0.05
     rewind_per: int = 5

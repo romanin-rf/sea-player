@@ -8,7 +8,7 @@ Repository: https://github.com/darrenburns/rich-pixels
 from __future__ import annotations
 
 
-from pathlib import Path, PurePath
+from pathlib import Path
 # > Pillow
 from PIL import Image as PILImageModule
 from PIL.Image import Image
@@ -22,8 +22,9 @@ from typing_extensions import (
     Tuple, List,
     Iterable, Mapping,
     Callable,
-    Union, Optional,
 )
+# > Local Imports
+from seaplayer._types import FilePathType
 
 # ! Types
 
@@ -32,7 +33,7 @@ GetPixel = Callable[[Tuple[int, int]], RGBA]
 
 # ! Methods
 
-def _get_color(pixel: RGBA, default_color: Optional[str]=None) -> Optional[str]:
+def _get_color(pixel: RGBA, default_color: str | None = None) -> str | None:
     r, g, b, a = pixel
     return f"rgb({r},{g},{b})" if a > 0 else default_color
 
@@ -43,20 +44,20 @@ class Renderer:
     Base class for renderers.
     """
 
-    default_color: Optional[str]
-    null_style: Optional[Style]
+    default_color: str | None
+    null_style: Style | None
 
     def __init__(
         self,
         *,
-        default_color: Optional[str]=None,
+        default_color: str | None = None,
     ) -> None:
         self.default_color = default_color
         self.null_style = (
             None if default_color is None else Style.parse(f"on {default_color}")
         )
 
-    def render(self, image: Image, resize: Optional[Tuple[int, int]], resample: Optional[Resampling]=None) -> List[Segment]:
+    def render(self, image: Image, resize: Tuple[int, int] | None, resample: Resampling | None = None) -> List[Segment]:
         """
         Render an image to Segments.
         """
@@ -106,7 +107,7 @@ class HalfcellRenderer(Renderer):
     Render an image to half-height cells.
     """
 
-    def render(self, image: Image, resize: Optional[Tuple[int, int]], resample: Optional[Resampling]=None) -> List[Segment]:
+    def render(self, image: Image, resize: Tuple[int, int] | None, resample: Resampling | None = None) -> List[Segment]:
         """
         Because each row is 2 lines high, so we need to make sure the height is even
         """
@@ -178,7 +179,7 @@ class FullcellRenderer(Renderer):
         )
         return Segment("  ", style)
     
-    def render(self, image: Image, resize: Optional[Tuple[int, int]], resample: Optional[Resampling]=None) -> List[Segment]:
+    def render(self, image: Image, resize: Tuple[int, int] | None, resample: Resampling | None = None) -> List[Segment]:
         """
         Render an image to Segments.
         """
@@ -211,13 +212,13 @@ class FullcellRenderer(Renderer):
 
 class RichPixels:
     def __init__(self) -> None:
-        self._segments: Optional[Segments] = None
+        self._segments: Segments | None = None
     
     @staticmethod
     def from_image(
         image: Image,
-        resize: Optional[Tuple[int, int]]=None,
-        resample: Optional[Resampling]=None
+        resize: Tuple[int, int] | None = None,
+        resample: Resampling | None = None
     ) -> RichPixels:
         resample = resample or Resampling.NEAREST
         segments = RichPixels._segments_from_image(image, resize, resample)
@@ -225,9 +226,9 @@ class RichPixels:
     
     @staticmethod
     def from_image_path(
-        path: Union[PurePath, str],
-        resize: Optional[Tuple[int, int]]=None,
-        resample: Optional[Resampling]=None
+        path: FilePathType,
+        resize: Tuple[int, int] | None = None,
+        resample: Resampling | None = None
     ) -> RichPixels:
         """Create a *RichPixels* object from an image. Requires 'image' extra dependencies.
         
@@ -243,8 +244,8 @@ class RichPixels:
     @staticmethod
     def _segments_from_image(
         image: Image,
-        resize: Optional[Tuple[int, int]]=None,
-        resample: Optional[Resampling]=None
+        resize: Tuple[int, int] | None = None,
+        resample: Resampling | None = None
     ) -> List[Segment]:
         if image.mode != "RGBA":
             image = image.convert("RGBA")
@@ -282,7 +283,7 @@ class RichPixels:
     @staticmethod
     def from_ascii(
         grid: str,
-        mapping: Optional[Mapping[str, Segment]]=None
+        mapping: Mapping[str, Segment] | None = None
     ) -> RichPixels:
         """
         Create a Pixels object from a 2D-grid of ASCII characters.

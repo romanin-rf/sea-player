@@ -10,11 +10,11 @@ from seaplayer.others.cache import Cacher
 
 # ! Metadata
 
-__title__ = "SeaPlayer"
-__version__ = "0.10.0.dev26"
-__author__ = "Romanin"
-__email__ = "semina054@gmail.com"
-__url__ = "https://github.com/romanin-rf/SeaPlayer"
+__title__                   = "SeaPlayer"
+__version__                 = "0.10.0.dev27"
+__author__                  = "Romanin"
+__email__                   = "semina054@gmail.com"
+__url__                     = "https://github.com/romanin-rf/SeaPlayer"
 
 # ! Settings
 
@@ -22,22 +22,22 @@ __url__ = "https://github.com/romanin-rf/SeaPlayer"
 
 # ! Initialization
 
-IM_BINARY = (bool(getattr(sys, 'frozen', False)) and hasattr(sys, '_MEIPASS'))
+IM_BINARY                   = (bool(getattr(sys, 'frozen', False)) and hasattr(sys, '_MEIPASS'))
 if IM_BINARY:
-    LOCAL_DIRPATH = os.path.dirname(sys.executable)
+    LOCAL_DIRPATH           = os.path.dirname(sys.executable)
     #ENABLE_PLUGIN_SYSTEM = False
 else:
-    LOCAL_DIRPATH = os.path.dirname(os.path.dirname(__file__))
+    LOCAL_DIRPATH           = os.path.dirname(os.path.dirname(__file__))
     #ENABLE_PLUGIN_SYSTEM = True
 
 # ! SeaPlayer Paths
 
-CSS_LOCALDIR = os.path.join(os.path.dirname(__file__), "style")
-ASSETS_DIRPATH = os.path.join(os.path.dirname(__file__), "assets")
-CONFIG_DIRPATH = user_config_dir(__title__, False, ensure_exists=True)
-CONFIG_FILEPATH = os.path.join(CONFIG_DIRPATH, "config.yaml")
-CACHE_DIRPATH = os.path.join(CONFIG_DIRPATH, "cache")
-LANGUAGES_DIRPATH = os.path.join(LOCAL_DIRPATH, "seaplayer", "langs")
+CSS_LOCALDIR                = os.path.join(os.path.dirname(__file__), "style")
+ASSETS_DIRPATH              = os.path.join(os.path.dirname(__file__), "assets")
+CONFIG_DIRPATH              = user_config_dir(__title__, False, ensure_exists=True)
+CONFIG_FILEPATH             = os.path.join(CONFIG_DIRPATH, "config.yaml")
+CACHE_DIRPATH               = os.path.join(CONFIG_DIRPATH, "cache")
+LANGUAGES_DIRPATH           = os.path.join(LOCAL_DIRPATH, "seaplayer", "langs")
 
 # ! PluginLoader Paths
 
@@ -52,14 +52,14 @@ LANGUAGES_DIRPATH = os.path.join(LOCAL_DIRPATH, "seaplayer", "langs")
 
 # ! Assets Paths
 
-IMGPATH_IMAGE_NOT_FOUND = os.path.join(ASSETS_DIRPATH, "image-not-found.png")
+IMGPATH_IMAGE_NOT_FOUND     = os.path.join(ASSETS_DIRPATH, "image-not-found.png")
 
 # ! Assets Loading
 
-IMG_NOT_FOUND = Image.open(IMGPATH_IMAGE_NOT_FOUND)
+IMG_NOT_FOUND               = Image.open(IMGPATH_IMAGE_NOT_FOUND)
 
 # ! Variables
 
-config: Config = Config(CONFIG_FILEPATH)
-cacher: Cacher = Cacher(CACHE_DIRPATH)
-ll: LanguageLoader = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)
+config: Config              = Config(CONFIG_FILEPATH)
+cacher: Cacher              = Cacher(CACHE_DIRPATH)
+ll: LanguageLoader          = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)

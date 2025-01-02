@@ -18,7 +18,6 @@ from seaplayer.objects.radioitem import RadioItem
 from typing_extensions import (
     Any, Tuple,
     Iterable, Mapping,
-    Union,
 )
 
 # ! Types
@@ -69,7 +68,7 @@ class ConfigurationScreen(Screen):
         id: str,
         key_name: str,
         key_desc: str,
-        variants: Union[Iterable[Tuple[str, Any]], Mapping[str, Any]],
+        variants: Iterable[Tuple[str, Any]] | Mapping[str, Any],
         current_value: Any,
         restart_request: bool=True
     ) -> ComposeResult:
