@@ -303,7 +303,7 @@ class SeaPlayer(App):
     # ^ Textaul Actions
     
     async def on_run(self) -> None:
-        self.playbacker = Playbacker(self)
+        self.playbacker = Playbacker(self, device_id=config.main.device_id)
     
     async def on_ready(self) -> None:
         for input_handler_type in self.INPUT_HANDLERS_TYPES:

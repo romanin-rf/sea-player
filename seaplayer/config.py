@@ -15,13 +15,13 @@ from seaplayer.objects.image import RenderMode
 
 class ConfigMainModel(BaseModel):
     language: str = Field('en-eng', min_length=6, max_length=6)
+    device_id: int | None = None
 
 class ConfigImageModel(BaseModel):
     resample: Resampling = Resampling.BILINEAR
     render_mode: RenderMode = RenderMode.HALF
 
 class ConfigSoundModel(BaseModel):
-    output_device_id: int | None = None
     max_volume: float = 3.0
     volume_per: float = 0.05
     rewind_per: int = 5

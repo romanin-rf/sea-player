@@ -133,7 +133,8 @@ class Playbacker:
     ) -> None:
         if self.__running:
             self.terminate()
-        self.streamer.reconfigure(samlerate, channels, dtype, device)
+        self.device_id = device if (device is not None) else self.device_id
+        self.streamer.reconfigure(samlerate, channels, dtype, self.device_id)
         if start:
             self.start()
     

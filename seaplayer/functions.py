@@ -1,11 +1,9 @@
 import asyncio
 import inspect
 import itertools
-from asyncio import AbstractEventLoop
 # > Typing
 from typing_extensions import (
     Any,
-    Union,
     Iterable, Generator,
     Callable, Coroutine, ParamSpec, Awaitable,
     Type, TypeVar, TypeAlias,
