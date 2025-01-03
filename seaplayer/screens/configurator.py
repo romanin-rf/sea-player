@@ -25,13 +25,17 @@ from typing_extensions import (
     Iterable, Mapping,
 )
 
+# ! Constants
+
+_OPTION_SELECTED_PREFIX = '[bold green]>[/bold green] '
+
 # ! Main Configration Screen
 
 class ConfigurationScreen(Screen):
     BINDINGS = [
         Binding('escape', 'app.pop_screen', ll.get('configurate.footer.back'), priority=True),
     ]
-    SUB_TITLE = ll.get('configurate')
+    SUB_TITLE = BINDING_GROUP_TITLE = ll.get('configurate')
     CSS = """
     VerticalScroll.configurations-container {
         border: solid cyan;
@@ -112,7 +116,7 @@ class ConfigurationScreen(Screen):
                 item = OptionItem(text, data)
                 if data == current_value:
                     selected_index = index
-                    item._prompt = '> ' + item._prompt
+                    item._prompt = _OPTION_SELECTED_PREFIX + item._prompt
                 options.append(item)
             option_list = OptionList(*options, id=id)
             container.styles.height = len(options)+4
@@ -207,16 +211,22 @@ class ConfigurationScreen(Screen):
             )
             self.configurate_state |= ConfigurateState.LOG_LEVEL
     
+    # ^ Spetific Methods
+    
+    def _selget_option(self, event: OptionList.OptionSelected, data: Any):
+        last_item: OptionItem = get_by_attr(event.option_list._contents, 'data', data)
+        item: OptionItem = event.option
+        last_item._prompt = last_item._prompt[len(_OPTION_SELECTED_PREFIX):]
+        item._prompt = _OPTION_SELECTED_PREFIX + event.option._prompt
+        event.option_list._refresh_lines()
+        return item
+    
     # ^ Callbacks
     
     @on(OptionList.OptionSelected, '#configurate-language-optionlist')
     async def action_language_selected(self, event: OptionList.OptionSelected) -> None:
         if ConfigurateState.LANGUAGE in self.configurate_state:
-            last_item: OptionItem[str] = get_by_attr(event.option_list._contents, 'data', config.main.language)
-            item: OptionItem[str] = event.option
-            last_item._prompt = last_item._prompt[2:]
-            item._prompt = '> ' + event.option._prompt
-            event.option_list._refresh_lines()
+            item: OptionItem[str] = self._selget_option(event, config.main.language)
             config.main.language = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
@@ -225,11 +235,7 @@ class ConfigurationScreen(Screen):
     @on(OptionList.OptionSelected, '#configurate-device-id')
     async def action_device_id_selected(self, event: OptionList.OptionSelected) -> None:
         if ConfigurateState.DEVICE_ID in self.configurate_state:
-            last_item: OptionItem[str] = get_by_attr(event.option_list._contents, 'data', config.main.device_id)
-            item: OptionItem[str] = event.option
-            last_item._prompt = last_item._prompt[2:]
-            item._prompt = '> ' + event.option._prompt
-            event.option_list._refresh_lines()
+            item: OptionItem[int | None] = self._selget_option(event, config.main.device_id)
             config.main.device_id = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
@@ -239,6 +245,7 @@ class ConfigurationScreen(Screen):
     async def action_image_resample_changed(self, event: RadioSet.Changed) -> None:
         if ConfigurateState.IMAGE_RESAMPLING in self.configurate_state:
             item: RadioItem[Resampling] = event.radio_set.children[event.index]
+            event.radio_set._selected = event.index
             config.image.resample = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
@@ -248,6 +255,7 @@ class ConfigurationScreen(Screen):
     async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
         if ConfigurateState.IMAGE_RENDER_MODE in self.configurate_state:
             item: RadioItem[RenderMode] = event.radio_set.children[event.index]
+            event.radio_set._selected = event.index
             config.image.render_mode = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
@@ -255,18 +263,11 @@ class ConfigurationScreen(Screen):
     
     @on(RadioSet.Changed, '#configurate-log-level-radioset')
     async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
-        #event.radio_set._selected = config.main.log_level
         item: RadioItem[TextualLogLevel] = get_by_attr(event.radio_set._nodes, 'data', config.main.log_level)
         event.radio_set._selected = event.radio_set._nodes.index(item)
         event.pressed.value = False
         item.value = True
         self.notify(ll.get('nofys.function.disabled'), timeout=3.0, severity='warning')
-        #if ConfigurateState.LOG_LEVEL in self.configurate_state:
-        #    item: RadioItem[RenderMode] = event.radio_set.children[event.index]
-        #    config.image.render_mode = item.data
-        #    config.refresh()
-        #    self.notify(ll.get('nofys.config.saved'), timeout=1.0)
-        #    logger.trace(f'Updated [yellow]config.image.render_mode[/yellow]={config.image.render_mode!r}')
     
     # ^ Compose
     

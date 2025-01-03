@@ -29,6 +29,7 @@ from seaplayer.config import Config
 from seaplayer.languages import LanguageLoader
 from seaplayer.screens import SCREENS as APP_SCREENS, screens_bindings as app_screens_bindings
 # > Local Imports (TUI)
+from seaplayer.objects.log import TextualLogLevel
 from seaplayer.objects.image import ImageWidget
 from seaplayer.objects.progressbar import PlaybackProgress
 from seaplayer.objects.playlist import PlayListView, PlayListItem
@@ -132,7 +133,7 @@ class SeaPlayer(App):
     async def worker_input_submitted(self, inputted: str) -> None:
         for handler in self.INPUT_HANDLERS:
             if handler.is_this(inputted):
-                logger.group('(START) ADDING TRACKS')
+                logger.group('(START) ADDING TRACKS', TextualLogLevel.TRACE)
                 added = 0
                 with Timer() as timer:
                     for track_uuid in handler.handle(inputted):
@@ -146,15 +147,18 @@ class SeaPlayer(App):
                         logger.trace('Added track: ' + str(self.playbacker.tracks[track_uuid]))
                 logger.debug(ll.get('nofys.sound.added').format(added, count=added))
                 logger.debug(f'[green]Time[/green]: {str(timer)} second(s)')
-                logger.group('(END) ADDING TRACKS')
+                logger.group('(END) ADDING TRACKS', TextualLogLevel.TRACE)
                 self.notify(ll.get('nofys.sound.added').format(added, count=added), timeout=2)
     
     async def worker_track_selected(self, uuid: UUID) -> None:
         self.playbacker.stop()
         self.playbacker.select_by_uuid(uuid)
         if self.playbacker.selected_track is not None:
+            logger.trace(f'Track selected: {self.playbacker.selected_track}')
             if self.playbacker.streamer.samplerate != self.playbacker.selected_track.source.samplerate:
-                self.playbacker.reconfigurate(self.playbacker.selected_track.source.samplerate)
+                with Timer() as timer:
+                    self.playbacker.reconfigurate(self.playbacker.selected_track.source.samplerate)
+                logger.debug(f'[green]Reconfigurate Time[/green]: {str(timer)} second(s)')
             self.call_from_thread(self.player_image.update_image, self.playbacker.selected_track.cover)
         self.call_from_thread(self.refresh_selected_label)
     

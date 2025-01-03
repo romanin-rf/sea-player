@@ -1,6 +1,7 @@
 import datetime
 from enum import IntEnum
-from rich.console import JustifyMethod
+from rich import box
+from rich.panel import Panel
 from textual.widgets import RichLog
 # > Typing
 from typing_extensions import (
@@ -91,6 +92,6 @@ class TextualLogger(RichLog):
         for _ in range(__n):
             self.write('')
     
-    def group(self, title: str) -> None:
-        title = "{0:^78}".format(title)
-        self.write("╔{1}╗\n║{0}║\n╚{1}╝".format(title, '═'*len(title)))
+    def group(self, title: str, level: TextualLogLevel) -> None:
+        if level >= self.log_level:
+            self.write(Panel(title, width=80, height=3, highlight=True, style='bold', border_style='magenta'))

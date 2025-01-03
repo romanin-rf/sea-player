@@ -2,19 +2,12 @@ import time
 # > Typing
 from typing_extensions import List, Tuple
 
-# ! Timer Class
+# ! Timer Base Class
 
-class Timer:
-    def __init__(self) -> None:
-        self.__start_time: float = 0.0
-        self.__end_time: float = 0.0
+class TimerBase:
+    __slots__ = ('duration', )
     
-    def __enter__(self):
-        self.__start_time = time.perf_counter()
-        return self
-    
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.__end_time = time.perf_counter()
+    duration: float
     
     def __str__(self) -> str:
         return f"{self.duration:.3f}"
@@ -27,6 +20,23 @@ class Timer:
     
     def __int__(self) -> int:
         return round(self.duration)
+    
+    def __format__(self, format_spec: str) -> str:
+        return self.duration.__format__(format_spec)
+
+# ! Timer Class
+
+class Timer(TimerBase):
+    def __init__(self) -> None:
+        self.__start_time: float = 0.0
+        self.__end_time: float = 0.0
+    
+    def __enter__(self):
+        self.__start_time = time.perf_counter()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.__end_time = time.perf_counter()
     
     @property
     def start_time(self) -> float:
@@ -45,35 +55,24 @@ class Timer:
     
     def end(self) -> None:
         self.__end_time = time.perf_counter()
+    
+    def reset(self) -> None:
+        self.__start_time = 0.0
+        self.__end_time = 0.0
 
 # ! Segment Timer Class
 
-class SegmentTimer:
+class SegmentTimer(TimerBase):
     def __init__(self) -> None:
         self.__segments: List[Tuple[float, float]] = []
         self.__index: int | None = None
     
     @property
     def duration(self) -> float:
-        dur = 0.0
+        value = 0.0
         for start_time, end_time in self.__segments:
-            dur += end_time - start_time
-        return dur
-    
-    def __str__(self) -> str:
-        return f"{self.duration:.3f}"
-    
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.__str__()})"
-    
-    def __float__(self) -> float:
-        return self.duration
-    
-    def __int__(self) -> int:
-        return round(self.duration)
-    
-    def __format__(self, format_spec: str) -> str:
-        return self.duration.__format__(format_spec)
+            value += end_time - start_time
+        return value
     
     def __enter__(self):
         self.acquire()
@@ -92,3 +91,7 @@ class SegmentTimer:
             end_time = time.perf_counter()
             self.__segments[self.__index] = (self.__segments[self.__index][0], end_time)
             self.__index = None
+    
+    def reset(self) -> None:
+        self.__segments = []
+        self.__index = None
