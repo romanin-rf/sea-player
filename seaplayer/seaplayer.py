@@ -18,7 +18,7 @@ from seaplayer.track import PlaybackerState, Playbacker, PlaybackerChangeStateMe
 from seaplayer.input_handler import InputHandlerBase, FileGlobInputHandler
 # > Local Imports (Units)
 from seaplayer.units import (
-    ll, config, cacher,
+    ll, config, cacher, logger,
     __title__, __version__,
     CSS_LOCALDIR,
     IMG_NOT_FOUND
@@ -129,6 +129,7 @@ class SeaPlayer(App):
     async def worker_input_submitted(self, inputted: str) -> None:
         for handler in self.INPUT_HANDLERS:
             if handler.is_this(inputted):
+                logger.group('(START) ADDING TRACKS')
                 for track_uuid in handler.handle(inputted):
                     self.call_from_thread(
                         self.playlist_view.create_item,
@@ -136,6 +137,8 @@ class SeaPlayer(App):
                         self.playbacker.tracks[track_uuid].__playback_name__(),
                         self.playbacker.tracks[track_uuid].__playback_subtitle__(),
                     )
+                    logger.trace('Added track: ' + str(self.playbacker.tracks[track_uuid]))
+                logger.group('(END) ADDING TRACKS')
     
     async def worker_track_selected(self, uuid: UUID) -> None:
         self.playbacker.stop()

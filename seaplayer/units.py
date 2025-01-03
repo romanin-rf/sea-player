@@ -1,5 +1,6 @@
 import os
 import sys
+import importlib.metadata
 from platformdirs import user_config_dir
 # > Pillow
 from PIL import Image
@@ -7,11 +8,12 @@ from PIL import Image
 from seaplayer.config import Config
 from seaplayer.languages import LanguageLoader
 from seaplayer.others.cache import Cacher
+from seaplayer.objects.log import TextualLogger
 
 # ! Metadata
 
 __title__                   = "SeaPlayer"
-__version__                 = "0.10.0.dev29"
+__version__                 = "0.10.0.dev30"
 __author__                  = "Romanin"
 __email__                   = "semina054@gmail.com"
 __url__                     = "https://github.com/romanin-rf/SeaPlayer"
@@ -63,3 +65,10 @@ IMG_NOT_FOUND               = Image.open(IMGPATH_IMAGE_NOT_FOUND)
 config: Config              = Config(CONFIG_FILEPATH)
 cacher: Cacher              = Cacher(CACHE_DIRPATH)
 ll: LanguageLoader          = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)
+logger: TextualLogger       = TextualLogger()
+
+# ! Log
+
+logger.info('Package \"textual\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('textual')))
+logger.info('Package \"seaplayer\" has [cyan]v{0}[/cyan]'.format(__version__))
+logger.info('Package \"seaplayer-audio\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('seaplayer-audio')))

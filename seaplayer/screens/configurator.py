@@ -9,7 +9,7 @@ from textual.binding import Binding
 from textual.widgets import Header, Footer, OptionList, RadioSet
 from textual.containers import VerticalScroll, Container
 # > Local Imports
-from seaplayer.units import config, ll
+from seaplayer.units import config, ll, logger
 from seaplayer.config import Config
 from seaplayer.languages import LanguageLoader
 from seaplayer.objects.image import RenderMode
@@ -216,6 +216,7 @@ class ConfigurationScreen(Screen):
                 },
                 config.image.render_mode
             )
+            self.configurate_state |= ConfigurateState.IMAGE_RENDER_MODE
     
     # ^ Callbacks
     
@@ -226,6 +227,7 @@ class ConfigurationScreen(Screen):
             config.main.language = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
+            logger.trace(f'Updated [yellow]config.main.language[/yellow]={config.main.language!r}')
     
     @on(OptionList.OptionSelected, '#configurate-device-id')
     async def action_device_id_selected(self, event: OptionList.OptionSelected) -> None:
@@ -234,6 +236,7 @@ class ConfigurationScreen(Screen):
             config.main.device_id = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
+            logger.trace(f'Updated [yellow]config.main.device_id[/yellow]={config.main.device_id!r}')
     
     @on(RadioSet.Changed, '#configurate-image-resample-radioset')
     async def action_image_resample_changed(self, event: RadioSet.Changed) -> None:
@@ -242,6 +245,7 @@ class ConfigurationScreen(Screen):
             config.image.resample = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
+            logger.trace(f'Updated [yellow]config.image.resample[/yellow]={config.image.resample!r}')
     
     @on(RadioSet.Changed, '#configurate-image-render-mode-radioset')
     async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
@@ -250,6 +254,7 @@ class ConfigurationScreen(Screen):
             config.image.render_mode = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
+            logger.trace(f'Updated [yellow]config.image.render_mode[/yellow]={config.image.render_mode!r}')
     
     # ^ Compose
     
