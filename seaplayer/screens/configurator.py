@@ -72,7 +72,7 @@ def query_sounddevices() -> Iterator[Tuple[int, str, str]]:
 
 class ConfigurationScreen(Screen):
     BINDINGS = [
-        Binding('escape', 'app.pop_screen', 'Close', priority=True),
+        Binding('escape', 'app.pop_screen', ll.get('configurate.footer.back'), priority=True),
     ]
     SUB_TITLE = ll.get('configurate')
     CSS = """
@@ -149,25 +149,19 @@ class ConfigurationScreen(Screen):
     def create_configurate_language(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
         if ConfigurateState.LANGUAGE not in self.configurate_state:
-            with Container(classes='configuration-item-container') as container:
-                container.border_title = ll.get('configurate.main.lang')
-                container.border_subtitle = ll.get('configurate.main.lang.desc') + _rr(True)
-                options, selected_index = [], 0
-                for index, lang in enumerate(ll.langs):
-                    if lang.author_url is not None:
-                        options.append(
-                            OptionItem(f"{lang.title} ({lang.words['from']} [link={lang.author_url}]{lang.author}[/link])", lang.mark)
-                        )
-                    else:
-                        options.append(
-                            OptionItem(f"{lang.title} ({lang.words['from']} {lang.author})", lang.mark)
-                        )
-                    if config.main.language == lang.mark:
-                        selected_index = index
-                option_list = OptionList(*options, id='configurate-language-optionlist')
-                container.styles.height = len(options)+4
-                option_list.highlighted = selected_index
-                yield option_list
+            variants = {}
+            for lang in ll.langs:
+                if lang.author_url is not None:
+                    key = f"{lang.title} ({lang.words['from']} [link={lang.author_url}]{lang.author}[/link])"
+                else:
+                    key = f"{lang.title} ({lang.words['from']} {lang.author})"
+                variants[key] = lang.mark
+            yield from self.create_configurate_options(
+                config, ll, 'configurate-language-optionlist',
+                'configurate.main.lang',
+                'configurate.main.lang.desc',
+                variants, config.main.language
+            )
             self.configurate_state |= ConfigurateState.LANGUAGE
     
     def create_configurate_device_id(self, config: Config, ll: LanguageLoader) -> ComposeResult:
