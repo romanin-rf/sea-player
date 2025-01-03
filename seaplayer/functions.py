@@ -3,8 +3,8 @@ import inspect
 import itertools
 # > Typing
 from typing_extensions import (
-    Any,
-    Iterable, Generator,
+    Any, Dict, Tuple,
+    Mapping, Iterable, Generator,
     Callable, Coroutine, ParamSpec, Awaitable,
     Type, TypeVar, TypeAlias,
 )
@@ -12,6 +12,8 @@ from typing_extensions import (
 # ! Types
 
 T                           = TypeVar('T')
+KV                          = TypeVar('KV')
+DV                          = TypeVar('DV')
 ReturnType                  = TypeVar('ReturnType')
 Params                      = ParamSpec('Params')
 AsyncMethod: TypeAlias      = Callable[..., Coroutine]
@@ -29,6 +31,18 @@ def exist_by_type(__type: Type[T], __iter: Iterable[T | object]) -> bool:
         if isinstance(item, __type):
             return True
     return False
+
+def get_by_attr(iter: Iterable[T], attr_name: str, attr_value: Any=None) -> T:
+    for item in iter:
+        if hasattr(item, attr_name):
+            if getattr(item, attr_name, None) == attr_value:
+                return item
+    raise ValueError(f"No item found with: {attr_name}={attr_value!r}")
+
+# ! Data Works Functions
+
+def invert_items(mapping: Mapping[KV, DV] | Iterable[Tuple[KV, DV]]) -> Dict[DV, KV]:
+    return {v: k for k, v in dict(mapping).items()}
 
 # ! String Work Functions
 

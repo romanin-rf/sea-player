@@ -13,7 +13,7 @@ from seaplayer.objects.log import TextualLogger
 # ! Metadata
 
 __title__                   = "SeaPlayer"
-__version__                 = "0.10.0.dev30"
+__version__                 = "0.10.0.dev31"
 __author__                  = "Romanin"
 __email__                   = "semina054@gmail.com"
 __url__                     = "https://github.com/romanin-rf/SeaPlayer"
@@ -65,10 +65,11 @@ IMG_NOT_FOUND               = Image.open(IMGPATH_IMAGE_NOT_FOUND)
 config: Config              = Config(CONFIG_FILEPATH)
 cacher: Cacher              = Cacher(CACHE_DIRPATH)
 ll: LanguageLoader          = LanguageLoader(LANGUAGES_DIRPATH, config.main.language)
-logger: TextualLogger       = TextualLogger()
+logger: TextualLogger       = TextualLogger(config.main.log_level)
 
 # ! Log
 
+logger.info('Package \"rich\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('rich')))
 logger.info('Package \"textual\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('textual')))
 logger.info('Package \"seaplayer\" has [cyan]v{0}[/cyan]'.format(__version__))
 logger.info('Package \"seaplayer-audio\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('seaplayer-audio')))

@@ -10,12 +10,14 @@ from PIL.Image import Resampling
 # > Local Imports
 from seaplayer._types import FilePathType
 from seaplayer.objects.image import RenderMode
+from seaplayer.objects.log import TextualLogLevel
 
 # ! Config Models
 
 class ConfigMainModel(BaseModel):
     language: str = Field('en-eng', min_length=6, max_length=6)
     device_id: int | None = None
+    log_level: TextualLogLevel = TextualLogLevel.NOTSET
 
 class ConfigImageModel(BaseModel):
     resample: Resampling = Resampling.BILINEAR

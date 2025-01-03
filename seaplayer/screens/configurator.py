@@ -1,5 +1,3 @@
-import sounddevice as sd
-from enum import Flag, auto
 from PIL.Image import Resampling
 # > Textual
 from textual import on
@@ -12,61 +10,20 @@ from textual.containers import VerticalScroll, Container
 from seaplayer.units import config, ll, logger
 from seaplayer.config import Config
 from seaplayer.languages import LanguageLoader
+from seaplayer.functions import invert_items, get_by_attr
+# > Local Imports (Objects)
 from seaplayer.objects.image import RenderMode
 from seaplayer.objects.optionitem import OptionItem
 from seaplayer.objects.radioitem import RadioItem
+from seaplayer.objects.log import LEVEL_NAMES, TextualLogLevel
+# > Local Imports (Configurator)
+from seaplayer.screens.configurator_units import ConfigurateState, _rr, query_sounddevices
 # > Typing
 from typing_extensions import (
-    Any, Tuple, List,
-    Iterator, Iterable, Mapping, TypedDict,
-    TypeAlias
+    Any, Tuple,
+    Literal,
+    Iterable, Mapping,
 )
-
-# ! Types
-
-class ConfigurateState(Flag):
-    LANGUAGE = auto()
-    DEVICE_ID = auto()
-    IMAGE_RESAMPLING = auto()
-    IMAGE_RENDER_MODE = auto()
-
-# ! Types Alias
-
-class DeviceInfo(TypedDict):
-    name: str
-    index: int
-    hostapi: int
-    max_input_channels: int
-    max_output_channels: int
-    default_low_input_latency: float
-    default_low_output_latency: float
-    default_high_input_latency: float
-    default_high_output_latency: float
-    default_samplerate: float
-
-class HostAPIInfo(TypedDict):
-    name: str
-    devices: List[int]
-    default_input_device: int
-    default_output_device: int
-
-DevicesInfo: TypeAlias = Iterable[DeviceInfo]
-HostAPIsInfo: TypeAlias = Tuple[HostAPIInfo]
-
-# ! Methods
-
-def _rr(_: bool):
-    if _:
-        return ' [red]\\[%s][/red]' % ll.get('words.restart_required')
-    return ''
-
-# ! Spetific Methods
-
-def query_sounddevices() -> Iterator[Tuple[int, str, str]]:
-    hosts: HostAPIsInfo = sd.query_hostapis()
-    devices: DevicesInfo = sd.query_devices()
-    for device in filter(lambda i: i.get('max_output_channels', 0) > 0, devices):
-        yield device['index'], device['name'], hosts[device['hostapi']]['name']
 
 # ! Main Configration Screen
 
@@ -103,10 +60,18 @@ class ConfigurationScreen(Screen):
         key_desc: str,
         variants: Iterable[Tuple[str, Any]] | Mapping[str, Any],
         current_value: Any,
-        restart_request: bool=True
+        restart_request: bool=True,
+        *,
+        variants_key_format: Literal['lang', 'text']='lang'
     ) -> ComposeResult:
         yield from []
-        variants = {ll.get(key): data for key, data in dict(variants).items()}
+        match variants_key_format:
+            case 'lang':
+                variants = {ll.get(key): data for key, data in dict(variants).items()}
+            case 'text':
+                variants = dict(variants)
+            case _:
+                raise ValueError(f"Invalid {_}")
         with Container(classes='configuration-item-container') as container:
             container.border_title = ll.get(key_name)
             container.border_subtitle = ll.get(key_desc) + _rr(restart_request)
@@ -126,19 +91,29 @@ class ConfigurationScreen(Screen):
         key_desc: str,
         variants: Iterable[Tuple[str, Any]] | Mapping[str, Any],
         current_value: Any,
-        restart_request: bool=True
+        restart_request: bool=True,
+        *,
+        variants_key_format: Literal['lang', 'text']='text'
     ) -> ComposeResult:
         yield from []
-        variants = dict(variants)
+        match variants_key_format:
+            case 'lang':
+                variants = {ll.get(key): data for key, data in dict(variants).items()}
+            case 'text':
+                variants = dict(variants)
+            case _:
+                raise ValueError(f"Invalid {_}")
         with Container(classes='configuration-item-container') as container:
             container.border_title = ll.get(key_name)
             container.border_subtitle = ll.get(key_desc) + _rr(restart_request)
             options, selected_index = [], 0
             for index, variant in enumerate(variants.items()):
                 text, data = variant
-                options.append(OptionItem(text, data))
+                item = OptionItem(text, data)
                 if data == current_value:
                     selected_index = index
+                    item._prompt = '> ' + item._prompt
+                options.append(item)
             option_list = OptionList(*options, id=id)
             container.styles.height = len(options)+4
             option_list.highlighted = selected_index
@@ -218,12 +193,30 @@ class ConfigurationScreen(Screen):
             )
             self.configurate_state |= ConfigurateState.IMAGE_RENDER_MODE
     
+    def create_configurate_log_level(self, config: Config, ll: LanguageLoader) -> ComposeResult:
+        yield from []
+        if ConfigurateState.LOG_LEVEL not in self.configurate_state:
+            variants = invert_items(LEVEL_NAMES)
+            yield from self.create_configurate_literal(
+                config, ll, 'configurate-log-level-radioset',
+                'configurate.logging.log_level',
+                'configurate.logging.log_level.desc',
+                variants,
+                config.main.log_level,
+                variants_key_format='text'
+            )
+            self.configurate_state |= ConfigurateState.LOG_LEVEL
+    
     # ^ Callbacks
     
     @on(OptionList.OptionSelected, '#configurate-language-optionlist')
     async def action_language_selected(self, event: OptionList.OptionSelected) -> None:
         if ConfigurateState.LANGUAGE in self.configurate_state:
+            last_item: OptionItem[str] = get_by_attr(event.option_list._contents, 'data', config.main.language)
             item: OptionItem[str] = event.option
+            last_item._prompt = last_item._prompt[2:]
+            item._prompt = '> ' + event.option._prompt
+            event.option_list._refresh_lines()
             config.main.language = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
@@ -232,7 +225,11 @@ class ConfigurationScreen(Screen):
     @on(OptionList.OptionSelected, '#configurate-device-id')
     async def action_device_id_selected(self, event: OptionList.OptionSelected) -> None:
         if ConfigurateState.DEVICE_ID in self.configurate_state:
-            item: OptionItem[int | None] = event.option
+            last_item: OptionItem[str] = get_by_attr(event.option_list._contents, 'data', config.main.device_id)
+            item: OptionItem[str] = event.option
+            last_item._prompt = last_item._prompt[2:]
+            item._prompt = '> ' + event.option._prompt
+            event.option_list._refresh_lines()
             config.main.device_id = item.data
             config.refresh()
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
@@ -256,6 +253,21 @@ class ConfigurationScreen(Screen):
             self.notify(ll.get('nofys.config.saved'), timeout=1.0)
             logger.trace(f'Updated [yellow]config.image.render_mode[/yellow]={config.image.render_mode!r}')
     
+    @on(RadioSet.Changed, '#configurate-log-level-radioset')
+    async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
+        #event.radio_set._selected = config.main.log_level
+        item: RadioItem[TextualLogLevel] = get_by_attr(event.radio_set._nodes, 'data', config.main.log_level)
+        event.radio_set._selected = event.radio_set._nodes.index(item)
+        event.pressed.value = False
+        item.value = True
+        self.notify(ll.get('nofys.function.disabled'), timeout=3.0, severity='warning')
+        #if ConfigurateState.LOG_LEVEL in self.configurate_state:
+        #    item: RadioItem[RenderMode] = event.radio_set.children[event.index]
+        #    config.image.render_mode = item.data
+        #    config.refresh()
+        #    self.notify(ll.get('nofys.config.saved'), timeout=1.0)
+        #    logger.trace(f'Updated [yellow]config.image.render_mode[/yellow]={config.image.render_mode!r}')
+    
     # ^ Compose
     
     def compose(self) -> ComposeResult:
@@ -265,5 +277,6 @@ class ConfigurationScreen(Screen):
             yield from self.create_configurate_device_id(config, ll)
             yield from self.create_configurate_image_resample_method(config, ll)
             yield from self.create_configurate_image_render_mode(config, ll)
+            yield from self.create_configurate_log_level(config, ll)
         configurations_container.border_title = ll.get('configurate')
         yield Footer()

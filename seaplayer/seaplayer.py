@@ -1,4 +1,5 @@
 import os
+import time
 from uuid import UUID
 from textual import on
 from textual.app import App, ComposeResult
@@ -32,6 +33,8 @@ from seaplayer.objects.image import ImageWidget
 from seaplayer.objects.progressbar import PlaybackProgress
 from seaplayer.objects.playlist import PlayListView, PlayListItem
 from seaplayer.objects.separator import HorizontalSeporator
+# > Local Imports (Others)
+from seaplayer.others.timer import Timer
 
 # ! Template Variables
 
@@ -117,7 +120,7 @@ class SeaPlayer(App):
                 key = 'sound.status.stopped'
         else:
             key = 'sound.status.none'
-        self.player_selected_label.update(
+        self.player_status_label.update(
             '<{0}> {1}'.format(
                 ll.get(key),
                 self.playbacker.selected_track.__playback_name__()
@@ -130,15 +133,21 @@ class SeaPlayer(App):
         for handler in self.INPUT_HANDLERS:
             if handler.is_this(inputted):
                 logger.group('(START) ADDING TRACKS')
-                for track_uuid in handler.handle(inputted):
-                    self.call_from_thread(
-                        self.playlist_view.create_item,
-                        track_uuid,
-                        self.playbacker.tracks[track_uuid].__playback_name__(),
-                        self.playbacker.tracks[track_uuid].__playback_subtitle__(),
-                    )
-                    logger.trace('Added track: ' + str(self.playbacker.tracks[track_uuid]))
+                added = 0
+                with Timer() as timer:
+                    for track_uuid in handler.handle(inputted):
+                        self.call_from_thread(
+                            self.playlist_view.create_item,
+                            track_uuid,
+                            self.playbacker.tracks[track_uuid].__playback_name__(),
+                            self.playbacker.tracks[track_uuid].__playback_subtitle__(),
+                        )
+                        added += 1
+                        logger.trace('Added track: ' + str(self.playbacker.tracks[track_uuid]))
+                logger.debug(ll.get('nofys.sound.added').format(added, count=added))
+                logger.debug(f'[green]Time[/green]: {str(timer)} second(s)')
                 logger.group('(END) ADDING TRACKS')
+                self.notify(ll.get('nofys.sound.added').format(added, count=added), timeout=2)
     
     async def worker_track_selected(self, uuid: UUID) -> None:
         self.playbacker.stop()
@@ -220,7 +229,7 @@ class SeaPlayer(App):
         
         # * Image Object Init
         
-        self.player_selected_label = Label('<{0}>'.format(ll.get('sound.status.none')), classes="player-selected-label")
+        self.player_status_label = Label('<{0}>'.format(ll.get('sound.status.none')), classes="player-selected-label")
         self.player_image = ImageWidget(
             IMG_NOT_FOUND, 
             resample=config.image.resample,
@@ -252,7 +261,7 @@ class SeaPlayer(App):
                 with Container(classes="player-visual-panel"):
                     yield self.player_image
                 with Container(classes="player-contol-panel"):
-                    yield self.player_selected_label
+                    yield self.player_status_label
                     yield PlaybackProgress(getfunc=self.get_playback_statuses_text)
                     with Horizontal(classes="box-buttons-sound-control"):
                         yield Button(

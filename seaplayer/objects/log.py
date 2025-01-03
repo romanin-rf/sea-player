@@ -12,11 +12,12 @@ from typing_extensions import (
 class TextualLogLevel(IntEnum):
     NOTSET = 0
     TRACE = 10
-    DEBUG = 20
-    INFO = 30
+    INFO = 20
+    DEBUG = 30
     WARNING = 40
     ERROR = 50
     CRITICAL = 100
+    OFF = 1000
 
 # ! Colors
 
