@@ -1,7 +1,7 @@
 import datetime
 from enum import IntEnum
-from rich import box
 from rich.panel import Panel
+from rich.traceback import Traceback
 from textual.widgets import RichLog
 # > Typing
 from typing_extensions import (
@@ -87,6 +87,10 @@ class TextualLogger(RichLog):
     
     def critical(self, message: str) -> None:
         self.textual_log(TextualLogLevel.CRITICAL, message)
+    
+    def exception(self) -> None:
+        if TextualLogLevel.ERROR >= self.log_level:
+            self.write(Traceback(width=80, word_wrap=True, show_locals=True))
     
     def ln(self, __n: int=1) -> None:
         for _ in range(__n):

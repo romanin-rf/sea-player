@@ -10,6 +10,7 @@ from typing_extensions import (
 )
 # > Local Imports
 from seaplayer.track import Playbacker, Track
+from seaplayer.units import logger
 
 # ! Abstract Class
 
@@ -31,7 +32,7 @@ class FileGlobInputHandler(InputHandlerBase):
     def is_this(self, input: str, /) -> bool:
         return glob.has_magic(input) or os.path.isfile(input)
     
-    def __exist_track_by_filepath(self, filepath: str) -> bool:
+    def _exist_track_by_filepath(self, filepath: str) -> bool:
         for track in self.playbacker.tracks.values():
             if track.source.name is not None:
                 if os.path.samefile(filepath, track.source.name):
@@ -40,10 +41,14 @@ class FileGlobInputHandler(InputHandlerBase):
     
     def handle(self, input: str, **kwargs) -> Generator[UUID, Any, None]:
         yield from []
-        for filepath in glob.glob(input, recursive=True):
-            if not self.__exist_track_by_filepath(filepath):
+        filespaths = glob.glob(input, recursive=True)
+        logger.trace(f"Paths found: {filespaths!r}")
+        for filepath in filespaths:
+            if not self._exist_track_by_filepath(filepath):
                 try:
                     source = FileAudioSource(filepath, **kwargs)
-                    yield Track(source, self.playbacker).uuid
+                    track = Track(source, self.playbacker)
+                    yield track.uuid
                 except:
-                    pass
+                    logger.debug(f"[#808080]Couldn't get the audio source from[/#808080]: {filepath!r}")
+                    logger.exception()

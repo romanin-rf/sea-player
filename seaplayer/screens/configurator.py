@@ -10,7 +10,7 @@ from textual.containers import VerticalScroll, Container
 from seaplayer.units import config, ll, logger
 from seaplayer.config import Config
 from seaplayer.languages import LanguageLoader
-from seaplayer.functions import invert_items, get_by_attr
+from seaplayer.functions import invert_items, item_by_attr
 # > Local Imports (Objects)
 from seaplayer.objects.image import RenderMode
 from seaplayer.objects.optionitem import OptionItem
@@ -214,7 +214,7 @@ class ConfigurationScreen(Screen):
     # ^ Spetific Methods
     
     def _selget_option(self, event: OptionList.OptionSelected, data: Any):
-        last_item: OptionItem = get_by_attr(event.option_list._contents, 'data', data)
+        last_item: OptionItem = item_by_attr(event.option_list._contents, 'data', data)
         item: OptionItem = event.option
         last_item._prompt = last_item._prompt[len(_OPTION_SELECTED_PREFIX):]
         item._prompt = _OPTION_SELECTED_PREFIX + event.option._prompt
@@ -263,7 +263,7 @@ class ConfigurationScreen(Screen):
     
     @on(RadioSet.Changed, '#configurate-log-level-radioset')
     async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
-        item: RadioItem[TextualLogLevel] = get_by_attr(event.radio_set._nodes, 'data', config.main.log_level)
+        item: RadioItem[TextualLogLevel] = item_by_attr(event.radio_set._nodes, 'data', config.main.log_level)
         event.radio_set._selected = event.radio_set._nodes.index(item)
         event.pressed.value = False
         item.value = True

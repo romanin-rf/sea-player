@@ -4,9 +4,11 @@ import itertools
 # > Typing
 from typing_extensions import (
     Any, Dict, Tuple,
+    Literal,
     Mapping, Iterable, Generator,
     Callable, Coroutine, ParamSpec, Awaitable,
     Type, TypeVar, TypeAlias,
+    overload,
 )
 
 # ! Types
@@ -32,12 +34,26 @@ def exist_by_type(__type: Type[T], __iter: Iterable[T | object]) -> bool:
             return True
     return False
 
-def get_by_attr(iter: Iterable[T], attr_name: str, attr_value: Any=None) -> T:
+@overload
+def item_by_attr(iter: Iterable[T], attrname: str, attrvalue: Any) -> T: ...
+@overload
+def item_by_attr(iter: Iterable[T], attrname: str, attrvalue: Any, *, strict: Literal[True]) -> T: ...
+@overload
+def item_by_attr(iter: Iterable[T], attrname: str, attrvalue: Any, *, strict: Literal[False]) -> T | None: ...
+
+def item_by_attr(
+    iter: Iterable[T],
+    attrname: str,
+    attrvalue: Any,
+    *,
+    strict: bool=True
+) -> T:
     for item in iter:
-        if hasattr(item, attr_name):
-            if getattr(item, attr_name, None) == attr_value:
+        if hasattr(item, attrname):
+            if getattr(item, attrname, None) == attrvalue:
                 return item
-    raise ValueError(f"No item found with: {attr_name}={attr_value!r}")
+    if strict:
+        raise ValueError(f"No item found with: {attrname}={attrvalue!r}")
 
 # ! Data Works Functions
 

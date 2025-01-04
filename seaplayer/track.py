@@ -189,8 +189,9 @@ class Playbacker:
     # ^ Playlist Methods
     
     def add(self, __track: 'Track') -> UUID:
-        self.tracks[__uuid := uuid4()] = __track
-        return __uuid
+        track_uuid = uuid4()
+        self.tracks[track_uuid] = __track
+        return track_uuid
     
     def remove(self, __uuid: UUID) -> bool:
         track = self.tracks.pop(__uuid, None)
@@ -207,7 +208,7 @@ class Track:
     ) -> None:
         self.source = source
         self.playbacker = playbacker
-        self.__uuid = self.playbacker.add(self)
+        self.uuid = self.playbacker.add(self)
     
     # ^ Dander Methods
     
@@ -221,10 +222,6 @@ class Track:
         return self.__str__()
     
     # ^ Propertyes
-    
-    @property
-    def uuid(self) -> UUID:
-        return self.__uuid
     
     @property
     def metadata(self):

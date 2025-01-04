@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "SeaPlayer"
-version = "0.10.0.dev32"
+version = "0.10.0.dev33"
 description = "SeaPlayer is a player that works in the terminal."
 authors = ["Romanin <60302782+romanin-rf@users.noreply.github.com>"]
 license = "MIT"
@@ -37,6 +37,10 @@ seaplayer-audio = {git = "https://github.com/romanin-rf/seaplayer-audio", rev = 
 [tool.poetry.group.dev.dependencies]
 pyinstaller-builder = {git = "https://git.smokeofanarchy.ru/Romanin/pyinstaller-builder.git"}
 rich = "^13.9.4"
+nuitka = "^2.5.9"
+poetry = "^1.8.5"
+
+[tool.poetry.group.docs.dependencies]
 mkdocs = "^1.6.1"
 mkdocs-exclude = "^1.0.2"
 mkdocs-autorefs = "^1.2.0"
