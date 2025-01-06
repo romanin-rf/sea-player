@@ -20,7 +20,7 @@ from seaplayer.objects.log import LEVEL_NAMES, TextualLogLevel
 from seaplayer.screens.configurator_units import ConfigurateState, _rr, query_sounddevices
 # > Typing
 from typing_extensions import (
-    Any, Tuple,
+    Any,
     Literal,
     Iterable, Mapping,
 )
@@ -52,7 +52,7 @@ class ConfigurationScreen(Screen):
     
     # ^ Variables
     
-    configurate_state = ConfigurateState(0)
+    __inited_configuration__: set[str] = set()
     
     # ^ Create Configurate Parameters Methods
     
@@ -62,7 +62,7 @@ class ConfigurationScreen(Screen):
         id: str,
         key_name: str,
         key_desc: str,
-        variants: Iterable[Tuple[str, Any]] | Mapping[str, Any],
+        variants: Iterable[tuple[str, Any]] | Mapping[str, Any],
         current_value: Any,
         restart_request: bool=True,
         *,
@@ -93,7 +93,7 @@ class ConfigurationScreen(Screen):
         id: str,
         key_name: str,
         key_desc: str,
-        variants: Iterable[Tuple[str, Any]] | Mapping[str, Any],
+        variants: Iterable[tuple[str, Any]] | Mapping[str, Any],
         current_value: Any,
         restart_request: bool=True,
         *,
@@ -127,7 +127,7 @@ class ConfigurationScreen(Screen):
     
     def create_configurate_language(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
-        if ConfigurateState.LANGUAGE not in self.configurate_state:
+        if 'language' not in self.__inited_configuration__:
             variants = {}
             for lang in ll.langs:
                 if lang.author_url is not None:
@@ -141,11 +141,11 @@ class ConfigurationScreen(Screen):
                 'configurate.main.lang.desc',
                 variants, config.main.language
             )
-            self.configurate_state |= ConfigurateState.LANGUAGE
+            self.__inited_configuration__.add('language')
     
     def create_configurate_device_id(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
-        if ConfigurateState.DEVICE_ID not in self.configurate_state:
+        if 'device_id' not in self.__inited_configuration__:
             variants = {
                 "([#5f87ff]*[/#5f87ff]) [yellow]Auto[/yellow]": None,
                 **{
@@ -160,11 +160,11 @@ class ConfigurationScreen(Screen):
                 variants,
                 config.main.device_id
             )
-            self.configurate_state |= ConfigurateState.DEVICE_ID
+            self.__inited_configuration__.add('device_id')
     
     def create_configurate_image_resample_method(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
-        if ConfigurateState.IMAGE_RESAMPLING not in self.configurate_state:
+        if 'image_resample_method' not in self.__inited_configuration__:
             yield from self.create_configurate_literal(
                 config, ll, 'configurate-image-resample-radioset',
                 'configurate.image.resample_method',
@@ -179,11 +179,11 @@ class ConfigurationScreen(Screen):
                 },
                 config.image.resample
             )
-            self.configurate_state |= ConfigurateState.IMAGE_RESAMPLING
+            self.__inited_configuration__.add('image_resample_method')
     
     def create_configurate_image_render_mode(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
-        if ConfigurateState.IMAGE_RENDER_MODE not in self.configurate_state:
+        if 'image_render_mode' not in self.__inited_configuration__:
             yield from self.create_configurate_literal(
                 config, ll, 'configurate-image-render-mode-radioset',
                 'configurate.image.render_mode',
@@ -195,11 +195,11 @@ class ConfigurationScreen(Screen):
                 },
                 config.image.render_mode
             )
-            self.configurate_state |= ConfigurateState.IMAGE_RENDER_MODE
+            self.__inited_configuration__.add('image_render_mode')
     
     def create_configurate_log_level(self, config: Config, ll: LanguageLoader) -> ComposeResult:
         yield from []
-        if ConfigurateState.LOG_LEVEL not in self.configurate_state:
+        if 'log_level' not in self.__inited_configuration__:
             variants = invert_items(LEVEL_NAMES)
             yield from self.create_configurate_literal(
                 config, ll, 'configurate-log-level-radioset',
@@ -209,7 +209,7 @@ class ConfigurationScreen(Screen):
                 config.main.log_level,
                 variants_key_format='text'
             )
-            self.configurate_state |= ConfigurateState.LOG_LEVEL
+            self.__inited_configuration__.add('log_level')
     
     # ^ Spetific Methods
     
@@ -225,7 +225,7 @@ class ConfigurationScreen(Screen):
     
     @on(OptionList.OptionSelected, '#configurate-language-optionlist')
     async def action_language_selected(self, event: OptionList.OptionSelected) -> None:
-        if ConfigurateState.LANGUAGE in self.configurate_state:
+        if 'language' in self.__inited_configuration__:
             item: OptionItem[str] = self._selget_option(event, config.main.language)
             config.main.language = item.data
             config.refresh()
@@ -234,7 +234,7 @@ class ConfigurationScreen(Screen):
     
     @on(OptionList.OptionSelected, '#configurate-device-id')
     async def action_device_id_selected(self, event: OptionList.OptionSelected) -> None:
-        if ConfigurateState.DEVICE_ID in self.configurate_state:
+        if 'device_id' in self.__inited_configuration__:
             item: OptionItem[int | None] = self._selget_option(event, config.main.device_id)
             config.main.device_id = item.data
             config.refresh()
@@ -243,7 +243,7 @@ class ConfigurationScreen(Screen):
     
     @on(RadioSet.Changed, '#configurate-image-resample-radioset')
     async def action_image_resample_changed(self, event: RadioSet.Changed) -> None:
-        if ConfigurateState.IMAGE_RESAMPLING in self.configurate_state:
+        if 'image_resample_method' in self.__inited_configuration__:
             item: RadioItem[Resampling] = event.radio_set.children[event.index]
             event.radio_set._selected = event.index
             config.image.resample = item.data
@@ -253,7 +253,7 @@ class ConfigurationScreen(Screen):
     
     @on(RadioSet.Changed, '#configurate-image-render-mode-radioset')
     async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
-        if ConfigurateState.IMAGE_RENDER_MODE in self.configurate_state:
+        if 'image_render_mode' in self.__inited_configuration__:
             item: RadioItem[RenderMode] = event.radio_set.children[event.index]
             event.radio_set._selected = event.index
             config.image.render_mode = item.data
@@ -263,11 +263,12 @@ class ConfigurationScreen(Screen):
     
     @on(RadioSet.Changed, '#configurate-log-level-radioset')
     async def action_image_render_mode_changed(self, event: RadioSet.Changed) -> None:
-        item: RadioItem[TextualLogLevel] = item_by_attr(event.radio_set._nodes, 'data', config.main.log_level)
-        event.radio_set._selected = event.radio_set._nodes.index(item)
-        event.pressed.value = False
-        item.value = True
-        self.notify(ll.get('nofys.function.disabled'), timeout=3.0, severity='warning')
+        if 'log_level' in self.__inited_configuration__:
+            item: RadioItem[TextualLogLevel] = event.radio_set.children[event.index]
+            config.main.log_level = item.data
+            config.refresh()
+            self.notify(ll.get('nofys.config.saved'), timeout=1.0)
+            logger.trace(f'Updated [yellow]config.main.log_level[/yellow]={config.main.log_level!r}')
     
     # ^ Compose
     
