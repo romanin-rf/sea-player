@@ -1,4 +1,5 @@
 from uuid import UUID
+from textual._loop import loop_from_index
 from textual.widgets import Label, ListView, ListItem
 
 # ! Playlist Item Widget Class
@@ -93,6 +94,14 @@ class PlayListView(ListView):
         if selected_child is None:
             return
         self.post_message(self.Selected(self, selected_child))
+    
+    def _select_by_attr(self, attr_name: str, value, post: bool=True) -> None:
+        for item in self._nodes:
+            if hasattr(item, attr_name):
+                if getattr(item, attr_name) == value:
+                    # NOTE: This is NOT WORKED... WHY-y-y-y-y-y???
+                    self.post_message(PlayListItem._ChildClicked(item))
+                    break
     
     async def create_item(self,
         uuid: UUID,

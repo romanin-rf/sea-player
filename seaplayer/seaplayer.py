@@ -1,6 +1,7 @@
 import os
 import time
 from uuid import UUID
+from threading import Semaphore
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
@@ -36,6 +37,7 @@ from seaplayer.objects.playlist import PlayListView, PlayListItem
 from seaplayer.objects.separator import HorizontalSeporator
 # > Local Imports (Others)
 from seaplayer.others.timer import Timer
+from seaplayer.others.locker import Locker
 
 # ! Template Variables
 
@@ -85,6 +87,8 @@ class SeaPlayer(App):
     
     playbacker: Playbacker
     playback_mode = cacher.var('playback_mode', PlaybackMode.PLAY)
+    
+    locker: Locker = Locker()
     
     # ^ Textual Spetific Methods
     
@@ -198,34 +202,51 @@ class SeaPlayer(App):
         if len(inputted) == 0:
             return
         event.input.clear()
-        self.run_worker(
+        await self.run_worker(
             self.worker_input_submitted(inputted),
             name='Input Submitted Handler',
             group='seaplayer.main',
             thread=True,
-        )
+        ).wait()
     
     @on(PlayListView.Selected, ".playlist-container")
     async def sound_selected(self, event: PlayListView.Selected) -> None:
+        if self.locker.locked('sound_select'):
+            return
         plitem: PlayListItem = event.item
-        self.run_worker(
+        await self.run_worker(
             self.worker_track_selected(plitem.uuid),
             name='Track Selected Work',
             group='seaplayer.main',
             thread=True,
-        )
+        ).wait()
     
     @on(PlaybackerChangeStateMessage)
     def sound_change_state(self, event: PlaybackerChangeStateMessage) -> None:
         self.refresh_selected_label()
     
     @on(PlaybackerTrackEndMessage)
-    def sound_track_ended(self, event: PlaybackerTrackEndMessage) -> None:
-        pass
+    async def sound_track_ended(self, event: PlaybackerTrackEndMessage) -> None:
+        match self.playback_mode:
+            case PlaybackMode.REPLAY_SOUND:
+                self.playbacker.play()
+            case PlaybackMode.REPLAY_LIST:
+                self.locker.acquire('sound_select')
+                track_uuid = self.playbacker.select_next()
+                self.playlist_view._select_by_attr('uuid', track_uuid, False)
+                await self.run_worker(
+                    self.worker_track_selected(track_uuid),
+                    name='Track Selected Work',
+                    group='seaplayer.main',
+                    thread=True,
+                ).wait()
+                self.playbacker.play()
+                self.locker.release('sound_select')
     
     # ^ Compose Method
     
     def compose(self) -> ComposeResult:
+        
         # * Play Screen
         
         self.player_box = Container(classes="player-box")
@@ -335,3 +356,5 @@ class SeaPlayer(App):
     async def run_async(self, *args, **kwargs):
         await self.on_run()
         return await super().run_async(*args, **kwargs)
+    
+    # ^ Textual Methods

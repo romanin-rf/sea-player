@@ -2,7 +2,7 @@ nuitka \
     --standalone --onefile --follow-imports --jobs=4 \
     --windows-icon-from-ico="icons/icon.ico" --linux-icon="icons/icon_256x256.png" \
     --company-name="Romanin" --product-name="SeaPlayer" \
-    --file-version="0.10.0.34" --product-version="0.10.0.34" \
+    --file-version="0.10.0.35" --product-version="0.10.0.35" \
     --file-description="SeaPlayer is a player that works in the terminal." \
     --output-dir="bin/nuitka" --output-filename="seaplayer" "./seplayer-main.py"
 cp -Rf "./seaplayer/assets" "./bin/nuitka/assets"
