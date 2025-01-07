@@ -1,7 +1,5 @@
 import os
-import time
 from uuid import UUID
-from threading import Semaphore
 from textual import on
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType

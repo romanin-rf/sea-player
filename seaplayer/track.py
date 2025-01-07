@@ -6,12 +6,11 @@ from enum import Flag, auto
 from uuid import uuid4, UUID
 from textual.app import App
 from textual.message import Message
-from threading import Condition
 # > SeaPlayer (Audio)
 from seaplayer_audio import CallbackSoundDeviceStreamer, CallbackSettingsFlag
 from seaplayer_audio._types import AudioSamplerate, AudioChannels, AudioDType
 # > Typing
-from typing_extensions import Dict, Optional
+from typing_extensions import Dict
 # > Local Imports
 from seaplayer._types import SupportAudioSource, SupportAudioStreamer
 from seaplayer.units import cacher
@@ -134,7 +133,12 @@ class Playbacker:
         if self.__running:
             self.terminate()
         self.device_id = device if (device is not None) else self.device_id
-        self.streamer.reconfigure(samlerate, channels, dtype, self.device_id)
+        self.streamer.reconfigure(
+            samplerate=samlerate,
+            channels=channels,
+            dtype=dtype,
+            device=self.device_id
+        )
         if start:
             self.start()
     
