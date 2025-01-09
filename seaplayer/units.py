@@ -13,7 +13,7 @@ from seaplayer.objects.log import TextualLogger, TextualLogLevel
 # ! Metadata
 
 __title__                   = "SeaPlayer"
-__version__                 = "0.10.0.dev37"
+__version__                 = "0.10.0.dev38"
 __author__                  = "Romanin"
 __email__                   = "semina054@gmail.com"
 __url__                     = "https://github.com/romanin-rf/SeaPlayer"
@@ -67,6 +67,11 @@ logger: TextualLogger       = TextualLogger(config.main.log_level)
 
 # ! Log
 
+logger.debug('Python Version: [cyan]{}.{}.{}[/cyan]' \
+    .format(
+        sys.version_info[0], sys.version_info[1], sys.version_info[2]
+    )
+)
 logger.debug('Package \"rich\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('rich')))
 logger.debug('Package \"textual\" has [cyan]v{0}[/cyan]'.format(importlib.metadata.version('textual')))
 logger.debug('Package \"seaplayer\" has [cyan]v{0}[/cyan]'.format(__version__))

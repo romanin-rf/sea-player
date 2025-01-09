@@ -8,7 +8,7 @@ from typing_extensions import (
 )
 # > Local Imports
 from seaplayer_audio.audiosources import FileAudioSource
-from seaplayer_audio.streamers import CallbackSoundDeviceStreamer
+from seaplayer_audio.streamers import MPSoundDeviceStreamer
 
 # ! Type Aliases
 
@@ -16,7 +16,7 @@ PathlibType: TypeAlias = Path | PurePath | PosixPath | PurePosixPath | PureWindo
 FilePathType: TypeAlias = str | bytes | PathlibType | PathLike[str] | PathLike[bytes]
 
 SupportAudioSource: TypeAlias = FileAudioSource
-SupportAudioStreamer: TypeAlias = CallbackSoundDeviceStreamer
+SupportAudioStreamer: TypeAlias = MPSoundDeviceStreamer
 
 # ! Playback Types
 

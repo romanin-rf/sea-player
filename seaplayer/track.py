@@ -1,4 +1,5 @@
 import os
+import time
 import datetime
 import numpy as np
 from numpy import ndarray
@@ -6,8 +7,9 @@ from enum import Flag, auto
 from uuid import uuid4, UUID
 from textual.app import App
 from textual.message import Message
+from threading import Thread, Timer
 # > SeaPlayer (Audio)
-from seaplayer_audio import CallbackSoundDeviceStreamer, CallbackSettingsFlag
+from seaplayer_audio import MPSoundDeviceStreamer, StreamerState
 from seaplayer_audio._types import AudioSamplerate, AudioChannels, AudioDType
 # > Typing
 from typing_extensions import Dict
@@ -67,10 +69,8 @@ class Playbacker:
         self.selected_track: Track | None = None
         self.selected_track_uuid: UUID | None = None
         self.state: PlaybackerState = PlaybackerState(0)
-        self.streamer: SupportAudioStreamer = CallbackSoundDeviceStreamer(
-            callback=self.__loop_frame__,
-            flag=CallbackSettingsFlag.FILL_ZEROS
-        )
+        self.streamer: SupportAudioStreamer = MPSoundDeviceStreamer()
+        self.thread: Thread = Thread(target=self.__loop__)
         self.__running = False
     
     # ^ Variables
@@ -96,31 +96,32 @@ class Playbacker:
     def __handler_audio__(self, data: ndarray):
         return data * self.volume
     
-    def __loop_frame__(self, outdata: ndarray, frames: int, time, status) -> None:
-        if (self.selected_track is not None) and (PlaybackerState.PLAYING in self.state) and (PlaybackerState.PAUSED not in self.state):
-            data = self.selected_track.source.read(frames)
-            if len(data) == 0:
-                self.stop()
-                self.app.post_message(PlaybackerTrackEndMessage())
-                return
-            elif len(data) < frames:
-                data = np.vstack( [data, np.zeros( (frames - len(data), self.streamer.channels), dtype=outdata.dtype)], dtype=outdata.dtype )
-            data = self.__handler_audio__(data)
-            outdata[:] = data
-        else:
-            outdata[:] = np.zeros( (frames, self.streamer.channels), dtype=outdata.dtype)
+    def __loop__(self) -> None:
+        while self.__running and (StreamerState.RUNNING in self.streamer.state):
+            if (self.selected_track is not None) and (PlaybackerState.PLAYING in self.state) and (PlaybackerState.PAUSED not in self.state):
+                data = self.selected_track.source.readline(0.05)
+                if len(data) == 0:
+                    self.stop()
+                    self.app.post_message(PlaybackerTrackEndMessage())
+                    continue
+                data = self.__handler_audio__(data)
+                self.streamer.send(data)
+            time.sleep(0.01)
     
     # ^ Playbacker Methods
     
     def start(self) -> None:
         if not self.__running:
-            self.running = True
+            self.__running = True
             self.streamer.start()
+            self.thread.start()
     
     def terminate(self) -> None:
         if self.__running:
-            self.running = False
+            self.__running = False
             self.streamer.stop()
+            if self.thread.is_alive():
+                self.thread.join()
     
     def reconfigurate(self,
         samlerate: AudioSamplerate | None = None,
@@ -128,10 +129,8 @@ class Playbacker:
         dtype: AudioDType | None = None,
         device: int | None = None,
         *,
-        start: bool=True
+        start: bool=False
     ) -> None:
-        if self.__running:
-            self.terminate()
         self.device_id = device if (device is not None) else self.device_id
         self.streamer.reconfigure(
             samplerate=samlerate,
@@ -140,7 +139,7 @@ class Playbacker:
             device=self.device_id
         )
         if start:
-            self.start()
+            self.streamer.start()
     
     # ^ Playback Main Methods
     
