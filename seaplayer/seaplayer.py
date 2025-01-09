@@ -164,6 +164,9 @@ class SeaPlayer(App):
             self.call_from_thread(self.player_image.update_image, self.playbacker.selected_track.cover)
         self.call_from_thread(self.refresh_selected_label)
     
+    async def timer_check_worktime(self) -> None:
+        logger.trace(f'Playbacker Worktime: {self.playbacker.worktime:.5f} s')
+    
     # ^ On Methods
     
     @on(Button.Pressed, "#switch-playback-mode")
@@ -344,6 +347,7 @@ class SeaPlayer(App):
         for input_handler_type in self.INPUT_HANDLERS_TYPES:
             self.INPUT_HANDLERS.append(input_handler_type(self.playbacker))
         self.playbacker.start()
+        #self.set_interval(1.0, callback=self.timer_check_worktime, name='Playbacker Worktime Log/Check')
     
     async def action_quit(self):
         self.playbacker.terminate()

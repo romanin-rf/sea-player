@@ -3,12 +3,11 @@ from pathlib import Path, PurePath, PosixPath, PurePosixPath, PureWindowsPath, W
 from enum import Enum
 # > Typing
 from typing_extensions import (
-    Union,
     TypeAlias
 )
 # > Local Imports
+from seaplayer_audio import MPSoundDeviceStreamer
 from seaplayer_audio.audiosources import FileAudioSource
-from seaplayer_audio.streamers import MPSoundDeviceStreamer
 
 # ! Type Aliases
 
