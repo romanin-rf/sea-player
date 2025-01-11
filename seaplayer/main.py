@@ -4,6 +4,10 @@ from rich.console import Console
 # > Typing
 from typing_extensions import Literal
 
+# ! Types
+
+RunMethod = Literal['default', 'async']
+
 # ! Variable
 
 console = Console()
@@ -11,18 +15,19 @@ console = Console()
 # ! SeaPlayer Main
 
 def seaplayer_main(
-    run_method: Literal['async', 'sync'],
+    run_method: RunMethod,
     **kwargs
 ) -> None:
     try:
         from seaplayer.seaplayer import SeaPlayer
         app = SeaPlayer()
-        if run_method == 'async':
-            output = asyncio.run(app.run_async(**kwargs))
-        elif run_method == 'sync':
-            output = app.run(**kwargs)
-        else:
-            raise ValueError(f'{run_method=}')
+        match run_method:
+            case 'async':
+                output = asyncio.run(app.run_async(**kwargs))
+            case 'default':
+                output = app.run(**kwargs)
+            case _:
+                raise ValueError(f'{run_method=}')
         if isinstance(output, int):
             exit(output)
     except SystemExit as e:
@@ -38,7 +43,7 @@ def seaplayer_main(
 @click.command()
 @click.option(
     '--run-method', 'run_method',
-    type=click.Choice(['sync', 'async']), default='async', show_default=True,
+    type=click.Choice([*RunMethod.__args__]), default='default', show_default=True,
     help='Choosing the launch method in which the application will run.'
 )
 @click.option(
@@ -62,7 +67,7 @@ def seaplayer_main(
     help='Enable mouse support.'
 )
 def main(
-    run_method: Literal['async', 'sync'],
+    run_method: RunMethod,
     headless: bool,
     inline: bool,
     inline_no_clear: bool,

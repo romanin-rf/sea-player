@@ -8,9 +8,9 @@ from uuid import uuid4, UUID
 from textual.app import App
 from textual.message import Message
 # > SeaPlayer (Audio)
-from seaplayer_audio.streamers.mpstreamersnd import StreamerAPI, PacketType
-from seaplayer_audio import MPSoundDeviceStreamer, StreamerState
+from seaplayer_audio import StreamerState
 from seaplayer_audio._types import AudioSamplerate, AudioChannels, AudioDType
+from seaplayer_audio.streamers.mpstreamersnd import MPSoundDeviceStreamer, StreamerAPI, PacketType
 # > Typing
 from typing_extensions import Dict
 # > Local Imports
@@ -69,7 +69,7 @@ class Playbacker:
         self.selected_track: Track | None = None
         self.selected_track_uuid: UUID | None = None
         self.state: PlaybackerState = PlaybackerState(0)
-        self.streamer: SupportAudioStreamer = MPSoundDeviceStreamer(run_loop=self.__loop__)
+        self.streamer: SupportAudioStreamer = MPSoundDeviceStreamer(loop_target=self.__loop__)
         self.worktime: float = 0.0
         self.__running = False
     

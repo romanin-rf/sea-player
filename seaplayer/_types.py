@@ -1,12 +1,12 @@
+from enum import Enum
 from os import PathLike
 from pathlib import Path, PurePath, PosixPath, PurePosixPath, PureWindowsPath, WindowsPath
-from enum import Enum
 # > Typing
 from typing_extensions import (
     TypeAlias
 )
 # > Local Imports
-from seaplayer_audio import MPSoundDeviceStreamer
+from seaplayer_audio.streamers import MPSoundDeviceStreamer
 from seaplayer_audio.audiosources import FileAudioSource
 
 # ! Type Aliases

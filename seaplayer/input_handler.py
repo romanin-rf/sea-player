@@ -2,7 +2,7 @@ import os
 import glob
 from uuid import UUID
 from abc import ABC, abstractmethod
-from seaplayer_audio import FileAudioSource
+from seaplayer_audio.audiosources import FileAudioSource
 # > Typing
 from typing_extensions import (
     Any,

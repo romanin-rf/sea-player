@@ -13,14 +13,14 @@ from seaplayer.objects.log import TextualLogger, TextualLogLevel
 # ! Metadata
 
 __title__                   = "SeaPlayer"
-__version__                 = "0.10.0.dev39"
+__version__                 = "0.10.0.dev40"
 __author__                  = "Romanin"
 __email__                   = "semina054@gmail.com"
 __url__                     = "https://github.com/romanin-rf/SeaPlayer"
 
 # ! Initialization
 
-IM_NUITKA_BINARY            = "__compiled__" in globals()
+IM_NUITKA_BINARY            = '__compiled__' in globals()
 IM_PYINSTALLER_BINARY       = bool(getattr(sys, 'frozen', False)) and hasattr(sys, '_MEIPASS')
 IM_BINARY                   = IM_NUITKA_BINARY or IM_PYINSTALLER_BINARY
 if IM_BINARY:
